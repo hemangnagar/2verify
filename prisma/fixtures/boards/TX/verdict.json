@@ -1,0 +1,32 @@
+{
+  "probedAt": "2026-10-21T10:47:20.775Z",
+  "permit": {
+    "pharmacyName": "CVS PHARMACY #11306",
+    "city": "AUSTIN",
+    "number": "33978"
+  },
+  "captchaBeforeSearch": false,
+  "captchaAfterSearch": false,
+  "resultShows": {
+    "status": "Active",
+    "expirationDate": "2028-01-31",
+    "disciplineSection": "Prior Disciplinary Orders*: No. Separate Remedial Plans and/or Inspection Reports section contains two linked PDFs; not opened."
+  },
+  "stableUrlPattern": "https://www.pharmacy.texas.gov/dbsearch/phy_zoom.asp?id={number}&type=1 (observed for one permit; not independently tested without session)",
+  "state": "TX",
+  "board": "Texas State Board of Pharmacy",
+  "lookupUrl": "https://www.pharmacy.texas.gov/dbsearch/phy_zoom.asp?id=33978&type=1",
+  "termsOfUse": {
+    "url": "https://www.pharmacy.texas.gov/dbsearch/pop_terms.asp",
+    "prohibitsAutomation": false,
+    "quote": "All results are subject to the terms of this disclaimer below.",
+    "otherRequirements": "Displayed verification terms contain no explicit scraping/robot/automation prohibition, numeric rate limit, attribution obligation or requirement to reproduce disclaimer. Accuracy and timeliness disclaimers apply. Official https://www.pharmacy.texas.gov/dbsearch/tables.asp offers daily pharmacy CSV downloads; no bulk files downloaded and no API established. Absence of a prohibition is not affirmative permission."
+  },
+  "verdict": "PASS",
+  "notes": "PASS means this single browser lookup worked and no explicit prohibition was found in the displayed verification terms; not legal clearance or reliability testing. One CVS/AUSTIN name search followed by one numeric permit search; number search navigated directly to detail without a second click. Name results loaded asynchronously. Detail states disciplinary-order information is current as of 30 days prior, orders older than 10 years are not online, and certain orders are confidential. Do not equate No with no historical discipline. Exact URL observed above; session-cookie dependence and initial-response-vs-JavaScript split not tested. Raw pharmacy detail includes incidental employee names/license links; no individual license was searched or opened; do not use employee numbers as demo input.",
+  "captureLimitations": {
+    "html": "Rendered DOM HTML snapshots, not browser Webpage-complete exports; linked CSS/images/scripts are not bundled. Suitable for DOM parser fixtures, not a guaranteed offline visual copy.",
+    "screenshots": "Browser JPEG screenshots converted losslessly to PNG; viewport only. Full-page capture timed out in this browser.",
+    "unobservedValues": "null means unobserved or unresolved, not false."
+  }
+}

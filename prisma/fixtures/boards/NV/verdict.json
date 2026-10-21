@@ -1,0 +1,32 @@
+{
+  "probedAt": "2026-10-21T10:47:20.775Z",
+  "permit": {
+    "pharmacyName": "CVS/PHARMACY #8801",
+    "city": "ELKO",
+    "number": "PH00641"
+  },
+  "captchaBeforeSearch": false,
+  "captchaAfterSearch": false,
+  "resultShows": {
+    "status": "Active",
+    "expirationDate": "2028-10-31",
+    "disciplineSection": "Discipline: Yes. Portal directs users to contact the board for current disciplinary action information; no disciplinary documents opened."
+  },
+  "stableUrlPattern": "https://online.nvbop.org/#/verifylicense (form state and expanded detail are not encoded in URL)",
+  "state": "NV",
+  "board": "Nevada State Board of Pharmacy",
+  "lookupUrl": "https://online.nvbop.org/#/verifylicense",
+  "termsOfUse": {
+    "url": null,
+    "prohibitsAutomation": null,
+    "quote": null,
+    "otherRequirements": "No terms link on the current public verification form. Board main-site footer links to https://nv.gov/privacy-policy; that page could not be retrieved by the research tool. Automation permission, attribution obligations and rate limits remain unresolved; no official API or bulk download established. An Export To Excel control exists for search results; it was not used."
+  },
+  "verdict": "UNCLEAR",
+  "notes": "Technical lookup succeeded without CAPTCHA, but terms review is incomplete. Original GLSuite URL in brief returned upstream remote connection failure on initial visit and one reload (not classified as bot detection). Board official https://www.bop.nv.gov/license-verification/ links to https://online.nvbop.org/; follow verification link and choose Facility License Search. One business discovery search (CVS, NV, Pharmacy), then one number search PH00641, then View Details. JavaScript SPA renders details inline; no separate detail URL. Status announcer retained 100 results found and pagination 1/2 even though number search displayed one matching row: parse row identities, not the announcer count. Legacy failure evidence retained. No terms.html fabricated.",
+  "captureLimitations": {
+    "html": "Rendered DOM HTML snapshots, not browser Webpage-complete exports; linked CSS/images/scripts are not bundled. Suitable for DOM parser fixtures, not a guaranteed offline visual copy.",
+    "screenshots": "Browser JPEG screenshots converted losslessly to PNG; viewport only. Full-page capture timed out in this browser.",
+    "unobservedValues": "null means unobserved or unresolved, not false."
+  }
+}

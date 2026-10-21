@@ -1,0 +1,32 @@
+{
+  "probedAt": "2026-10-21T10:47:20.775Z",
+  "permit": {
+    "pharmacyName": null,
+    "city": null,
+    "number": null
+  },
+  "captchaBeforeSearch": true,
+  "captchaAfterSearch": null,
+  "resultShows": {
+    "status": null,
+    "expirationDate": null,
+    "disciplineSection": null
+  },
+  "stableUrlPattern": null,
+  "state": "CA",
+  "board": "California State Board of Pharmacy (DCA License Search)",
+  "lookupUrl": "https://search.dca.ca.gov/",
+  "termsOfUse": {
+    "url": "https://www.ca.gov/legal/conditions-of-use/",
+    "prohibitsAutomation": false,
+    "quote": "In general, information presented on this website, unless otherwise indicated, is considered in the public domain.",
+    "otherRequirements": "No explicit automation prohibition, attribution requirement, numeric rate limit, or API found in the reviewed statewide conditions. It prohibits circumventing security and use outside intended purposes. DCA-specific disclaimer was not reviewed after the challenge was identified. Absence of a prohibition is not affirmative permission."
+  },
+  "verdict": "CAPTCHA",
+  "notes": "Cloudflare Verify you are human checkbox visible before submission; Search disabled. Selected Pharmacy board and Pharmacy type and filled CVS, but no search submitted. No CAPTCHA interaction or bypass. No permit selected, so result files intentionally absent. home.html is a rendered DOM capture; home.png shows the filled form and challenge. Terms review limited to linked statewide conditions.",
+  "captureLimitations": {
+    "html": "Rendered DOM HTML snapshots, not browser Webpage-complete exports; linked CSS/images/scripts are not bundled. Suitable for DOM parser fixtures, not a guaranteed offline visual copy.",
+    "screenshots": "Browser JPEG screenshots converted losslessly to PNG; viewport only. Full-page capture timed out in this browser.",
+    "unobservedValues": "null means unobserved or unresolved, not false."
+  }
+}
