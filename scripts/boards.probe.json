@@ -1,0 +1,39 @@
+{
+  "_comment": "Per-board probe recipes. Edit selectors after looking at the live page; the script falls back to generic form detection when a selector is missing. {number} is replaced with the permit number.",
+  "boards": [
+    {
+      "state": "CA",
+      "board": "California State Board of Pharmacy (DCA License Search)",
+      "home": "https://search.dca.ca.gov/",
+      "termsCandidates": ["https://www.dca.ca.gov/about_us/conditions_of_use.shtml", "https://search.dca.ca.gov/"],
+      "mode": "url",
+      "resultUrl": "https://search.dca.ca.gov/results?boardCode=0&licenseType=PHY&licenseNumber={number}",
+      "detailLinkText": null,
+      "expect": { "statusWords": ["Clear", "Current", "Active", "Delinquent", "Cancelled", "Revoked", "Expired"], "expirationLabel": "Expiration Date" }
+    },
+    {
+      "state": "NV",
+      "board": "Nevada State Board of Pharmacy (GLSuite public verification)",
+      "home": "https://nvbop.glsuite.us/GLSuiteWeb/Clients/NVBOP/Public/Verification/Search.aspx",
+      "termsCandidates": ["https://bop.nv.gov/", "https://nvbop.glsuite.us/GLSuiteWeb/Clients/NVBOP/Public/Verification/Search.aspx"],
+      "mode": "form",
+      "formUrl": "https://nvbop.glsuite.us/GLSuiteWeb/Clients/NVBOP/Public/Verification/Search.aspx",
+      "numberInput": "input[id*='LicNum'], input[id*='License'], input[name*='LicNum']",
+      "submit": "input[type=submit][value*='Search'], button:has-text('Search'), input[id*='Search']",
+      "detailLinkText": null,
+      "expect": { "statusWords": ["Active", "Expired", "Suspended", "Revoked", "Inactive", "Probation"], "expirationLabel": "Expiration" }
+    },
+    {
+      "state": "TX",
+      "board": "Texas State Board of Pharmacy (license verification)",
+      "home": "https://www.pharmacy.texas.gov/",
+      "termsCandidates": ["https://www.pharmacy.texas.gov/", "https://www.pharmacy.texas.gov/dbsearch/"],
+      "mode": "form",
+      "formUrl": "https://www.pharmacy.texas.gov/dbsearch/phy_search.asp",
+      "numberInput": "input[name*='lic'], input[name*='Lic'], input[id*='lic']",
+      "submit": "input[type=submit], button[type=submit], button:has-text('Search')",
+      "detailLinkText": null,
+      "expect": { "statusWords": ["Active", "Expired", "Delinquent", "Suspended", "Revoked", "Cancelled"], "expirationLabel": "Expiration" }
+    }
+  ]
+}

@@ -14,7 +14,8 @@
     "seed": "tsx prisma/seed-catalog.ts",
     "demo": "tsx prisma/seed-demo.ts",
     "seed:wipe": "tsx prisma/seed-wipe.ts",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "probe:boards": "tsx scripts/probe-boards.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1154.0",
