@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { renewTermAction, setOrgStatusAction, switchIntoOrgAction } from "../../actions";
 import { AdjustForm } from "./adjust-form";
+import { JurisdictionForm } from "./jurisdiction-form";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +18,7 @@ export default async function OrgDetailPage({ params, searchParams }: { params: 
   const { id } = await params;
   const { msg } = await searchParams;
   const data = await asSystem(async () => {
-    const org = await db.org.findUnique({ where: { id }, include: { plan: true, users: { orderBy: { email: "asc" } } } });
+    const org = await db.org.findUnique({ where: { id }, include: { plan: true, users: { orderBy: { email: "asc" } }, jurisdictions: { orderBy: { addedOn: "asc" } } } });
     if (!org) return null;
     const [ledger, counts] = await Promise.all([
       db.creditLedger.findMany({ where: { orgId: id }, orderBy: [{ createdAt: "desc" }, { id: "desc" }], include: { createdBy: true }, take: 60 }),
@@ -143,6 +144,32 @@ export default async function OrgDetailPage({ params, searchParams }: { params: 
           </CardContent>
         </Card>
       </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Jurisdictions</CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-4">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>State</TableHead>
+                <TableHead>Added</TableHead>
+                <TableHead>Note</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {org.jurisdictions.map((j) => (
+                <TableRow key={j.id}>
+                  <TableCell className="font-medium">{j.state}</TableCell>
+                  <TableCell>{formatDate(j.addedOn)}</TableCell>
+                  <TableCell className="text-xs text-muted-foreground">{j.note}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+          <JurisdictionForm orgId={org.id} existing={org.subscribedStates} />
+        </CardContent>
+      </Card>
       <Card>
         <CardHeader>
           <CardTitle>Credit ledger (latest 60, insert-only)</CardTitle>

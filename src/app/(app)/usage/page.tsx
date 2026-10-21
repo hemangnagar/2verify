@@ -6,6 +6,10 @@ import { PageHeader, DescriptionList } from "@/components/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
+import { brand } from "@/config/brand";
+
+/** States with a headless-browser board adapter. Prompt B replaces this with the board_adapter table. */
+const AUTOMATED_STATES = new Set<string>([]);
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +21,18 @@ export default async function UsagePage() {
   const usage = computeUsage({ plan: org.plan, subscribedStates: org.subscribedStates, termStartsOn: org.termStartsOn, ledger });
   const pct = usage.allotted ? Math.min(100, Math.round((usage.used / usage.allotted) * 100)) : 0;
   const maxMonth = Math.max(1, ...usage.monthly.map((m) => m.verifications));
+  const jurisdictions = await db.orgJurisdiction.findMany({ where: { removedOn: null }, orderBy: { addedOn: "asc" } });
+  const byState = await db.verification.groupBy({ by: ["credentialId"], _count: { _all: true } });
+  const credStates = await db.credential.findMany({ where: { id: { in: byState.map((b) => b.credentialId) } }, select: { id: true, state: true } });
+  const stateOf = new Map(credStates.map((c) => [c.id, c.state]));
+  const perState = new Map<string, number>();
+  let federal = 0;
+  for (const b of byState) {
+    const st = stateOf.get(b.credentialId);
+    if (st) perState.set(st, (perState.get(st) ?? 0) + b._count._all);
+    else federal += b._count._all;
+  }
+  const addedIn = (month: string) => jurisdictions.filter((j) => j.addedOn.toISOString().slice(0, 7) === month).map((j) => j.state);
 
   return (
     <div className="grid gap-6">
@@ -79,17 +95,59 @@ export default async function UsagePage() {
       <Card>
         <CardHeader>
           <CardTitle>Verifications by month</CardTitle>
+          <CardDescription>Volume steps up each time a jurisdiction is added: an onboarding wave for that state&apos;s licenses, then a higher steady re-verification rate.</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex h-40 items-end gap-2">
-            {usage.monthly.map((m) => (
-              <div key={m.month} className="flex flex-1 flex-col items-center gap-1">
-                <span className="text-xs">{m.verifications}</span>
-                <div className="w-full rounded-t bg-sky-600" style={{ height: `${Math.max(2, (m.verifications / maxMonth) * 120)}px` }} title={`${m.month}: ${m.verifications}`} />
-                <span className="text-[10px] text-muted-foreground">{m.month.slice(2)}</span>
-              </div>
-            ))}
+          <div className="flex h-48 items-end gap-2">
+            {usage.monthly.map((m) => {
+              const added = addedIn(m.month);
+              return (
+                <div key={m.month} className="flex flex-1 flex-col items-center gap-1">
+                  <span className="text-xs">{m.verifications}</span>
+                  <div className={cn("w-full rounded-t", added.length ? "bg-amber-500" : "bg-sky-600")} style={{ height: `${Math.max(2, (m.verifications / maxMonth) * 120)}px` }} title={`${m.month}: ${m.verifications}`} />
+                  <span className="text-[10px] text-muted-foreground">{m.month.slice(2)}</span>
+                  <span className="h-4 text-[10px] font-semibold text-amber-700">{added.length ? `+${added.join(" +")}` : ""}</span>
+                </div>
+              );
+            })}
           </div>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Jurisdictions</CardTitle>
+          <CardDescription>Each state is set up by {brand.name}: board lookup sources, license-type rules, and where the board allows it, an automated adapter. Ask us to add one.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>State</TableHead>
+                <TableHead>Added</TableHead>
+                <TableHead>Verifications to date</TableHead>
+                <TableHead>Board verification</TableHead>
+                <TableHead>Annual fee</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {jurisdictions.map((j) => (
+                <TableRow key={j.id}>
+                  <TableCell className="font-medium">{j.state}</TableCell>
+                  <TableCell>{formatDate(j.addedOn)}</TableCell>
+                  <TableCell>{(perState.get(j.state) ?? 0).toLocaleString()}</TableCell>
+                  <TableCell>{AUTOMATED_STATES.has(j.state) ? <span className="text-emerald-700">Automated adapter</span> : <span className="text-muted-foreground">Guided workbench</span>}</TableCell>
+                  <TableCell>{dollars(JURISDICTION_FEE_CENTS)}</TableCell>
+                </TableRow>
+              ))}
+              <TableRow>
+                <TableCell className="text-muted-foreground">Federal (NPI, DEA)</TableCell>
+                <TableCell>{formatDate(usage.termStartsOn)}</TableCell>
+                <TableCell>{federal.toLocaleString()}</TableCell>
+                <TableCell className="text-emerald-700">Automated (NPPES)</TableCell>
+                <TableCell>included</TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
       <Card>

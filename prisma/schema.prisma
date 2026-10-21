@@ -160,8 +160,26 @@ model Org {
   alerts           Alert[]
   auditEntries     AuditLog[]
   ledger           CreditLedger[]
+  jurisdictions    OrgJurisdiction[]
 
   @@map("org")
+}
+
+/// When each subscribed state was added to (and removed from) an org. `org.subscribed_states` stays
+/// the current set used for pricing; this is the history behind it and the per-state story on the usage page.
+model OrgJurisdiction {
+  id        String    @id @default(cuid())
+  orgId     String    @map("org_id")
+  state     String    @db.Char(2)
+  addedOn   DateTime  @map("added_on") @db.Date
+  removedOn DateTime? @map("removed_on") @db.Date
+  note      String?
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  org Org @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@unique([orgId, state])
+  @@map("org_jurisdiction")
 }
 
 /// INSERT ONLY (trigger). One row per credit movement; balance_after is the running balance.

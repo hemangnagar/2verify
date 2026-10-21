@@ -67,6 +67,8 @@ interface OrgSpec {
   planName: string;
   status: OrgStatus;
   states: string[];
+  /** When each state was added (days ago). States not listed were added at term start. */
+  stateAdded?: Record<string, number>;
   termStartedDaysAgo: number;
   targetUsed: number;
   adminName: string;
@@ -141,8 +143,9 @@ class OrgBuilder {
   V(daysAgo: number, extra: Partial<VerifySpec> = {}): VerifySpec {
     return { daysAgo, ...extra };
   }
-  recent(): VerifySpec[] {
-    return [this.V(this.between(this.spec.recent[0], this.spec.recent[1]))];
+  recent(state?: string | null): VerifySpec[] {
+    const added = state && this.spec.stateAdded?.[state] !== undefined ? this.spec.stateAdded[state] : this.spec.recent[1];
+    return [this.V(this.between(this.spec.recent[0], Math.max(this.spec.recent[0], Math.min(this.spec.recent[1], added - 1))))];
   }
   lookupFor(state: string | null, typeId: string) {
     return this.lookups.find((l) => l.state === state && l.credentialTypeId === typeId) ?? null;
@@ -300,18 +303,46 @@ class OrgBuilder {
   }
 
   /**
-   * Add historical verifications until the org's count reaches the target, round-robin over PSV
-   * credentials that already have at least one (so never-verified stories stay intact), spread
-   * uniformly across the term so the usage page's run rate reflects steady use.
+   * Add historical verifications until the org's count reaches the target, following a monthly
+   * schedule that tells the story: volume steps up each time a state is added (an onboarding wave
+   * for that state's credentials, then a higher steady rate), and a state's credentials are never
+   * verified before the state was added. Round-robin over PSV credentials that already have at
+   * least one verification, so never-verified stories stay intact.
    */
   async densify(target: number) {
     const creds = await db.credential.findMany({ where: { credentialType: { psvRequired: true }, verifications: { some: {} } }, include: { credentialType: true, person: true, entity: true } });
     if (!creds.length) return;
-    const hi = Math.max(2, this.spec.termStartedDaysAgo - 1);
-    let i = 0;
-    while (this.counts.verifications < target) {
-      const c = creds[i++ % creds.length];
-      await this.verification(this.refOf(c), { daysAgo: this.between(1, hi) });
+    const termStart = D(-this.spec.termStartedDaysAgo);
+    const addedOn = (state: string) => D(-(this.spec.stateAdded?.[state] ?? this.spec.termStartedDaysAgo));
+    // Months of the term so far, with weights.
+    const months: Array<{ start: Date; end: Date; weight: number; added: string[] }> = [];
+    for (let m = firstOfMonth(termStart); m <= today; m = firstOfMonth(m, 1)) {
+      const start = m < termStart ? termStart : m;
+      const next = firstOfMonth(m, 1);
+      const end = next > today ? today : addDays(next, -1);
+      const active = this.spec.states.filter((st) => addedOn(st) <= end).length;
+      const added = this.spec.states.filter((st) => addedOn(st) >= start && addedOn(st) <= end);
+      months.push({ start, end, weight: active * 10 + added.length * 40, added });
+    }
+    const existing = await db.verification.findMany({ select: { verifiedAt: true } });
+    const totalWeight = months.reduce((s, m) => s + m.weight, 0);
+    let remaining = target - existing.length;
+    for (let mi = 0; mi < months.length && remaining > 0; mi++) {
+      const m = months[mi];
+      const have = existing.filter((v) => v.verifiedAt >= m.start && v.verifiedAt <= addDays(m.end, 1)).length;
+      const want = mi === months.length - 1 ? remaining : Math.max(0, Math.round((target * m.weight) / totalWeight) - have);
+      const eligible = creds.filter((c) => !c.state || addedOn(c.state) <= m.end);
+      // In an onboarding month, that state's credentials go first.
+      const ordered = [...eligible.filter((c) => c.state && m.added.includes(c.state)), ...eligible.filter((c) => !(c.state && m.added.includes(c.state)))];
+      const span = Math.max(1, Math.round((m.end.getTime() - m.start.getTime()) / 86_400_000));
+      for (let k = 0; k < want && remaining > 0 && ordered.length; k++) {
+        const c = ordered[k % ordered.length];
+        const lo = Math.max(0, Math.round((today.getTime() - m.end.getTime()) / 86_400_000));
+        const daysAgo = Math.max(1, lo + this.between(0, span));
+        if (c.state && D(-daysAgo) < addedOn(c.state)) continue;
+        await this.verification(this.refOf(c), { daysAgo });
+        remaining--;
+      }
     }
   }
   private refOf(c: { id: string; number: string | null; state: string | null; expiresOn: Date | null; credentialType: { name: string; id: string }; person: { id: string } | null; entity: { id: string } | null }) {
@@ -379,6 +410,7 @@ const SIERRA: OrgSpec = {
   planName: "Advanced",
   status: "active",
   states: ["NV", "CA", "AZ"],
+  stateAdded: { NV: 300, CA: 203, AZ: 81 },
   termStartedDaysAgo: 300,
   targetUsed: 588,
   adminName: "Megan Whitfield",
@@ -413,53 +445,53 @@ const SIERRA: OrgSpec = {
     const reno = b.E("reno");
     const sac = b.E("sac");
     const V = b.V.bind(b);
-    await b.cred({ subject: { entity: "reno" }, type: "Pharmacy Permit", state: "NV", number: b.lic("NV", "pharmacy"), verifications: b.recent() });
-    await b.cred({ subject: { entity: "reno" }, type: "Nonresident Pharmacy Permit", state: "AZ", number: b.lic("AZ", "pharmacy"), verifications: b.recent() });
-    await b.cred({ subject: { entity: "reno" }, type: "Nonresident Pharmacy Permit", state: "CA", number: b.lic("CA", "pharmacy"), verifications: b.recent() });
+    await b.cred({ subject: { entity: "reno" }, type: "Pharmacy Permit", state: "NV", number: b.lic("NV", "pharmacy"), verifications: b.recent("NV") });
+    await b.cred({ subject: { entity: "reno" }, type: "Nonresident Pharmacy Permit", state: "AZ", number: b.lic("AZ", "pharmacy"), verifications: b.recent("AZ") });
+    await b.cred({ subject: { entity: "reno" }, type: "Nonresident Pharmacy Permit", state: "CA", number: b.lic("CA", "pharmacy"), verifications: b.recent("CA") });
     await b.cred({ subject: { entity: "reno" }, type: "DEA Registration", number: reno.deaNumber, verifications: b.recent() });
     await b.cred({ subject: { entity: "reno" }, type: "NPI", number: reno.npi, expiresIn: null, verifications: [V(b.between(20, 200), { method: "auto_api" })] });
-    await b.cred({ subject: { entity: "reno" }, type: "State Controlled Substance Registration", state: "NV", number: `CS${b.lic("NV", "pharmacy").slice(2)}`, verifications: b.recent() });
+    await b.cred({ subject: { entity: "reno" }, type: "State Controlled Substance Registration", state: "NV", number: `CS${b.lic("NV", "pharmacy").slice(2)}`, verifications: b.recent("NV") });
     await b.cred({ subject: { entity: "reno" }, type: "Professional Liability Insurance", number: "DMI-PL-4471920", expiresIn: 27, issuedDaysAgo: 338, notes: "Demo Mutual Insurance Co. Renewal quote requested." });
     await b.cred({ subject: { entity: "reno" }, type: "URAC Specialty Pharmacy Accreditation", number: "URAC-SP-DEMO-2024", expiresIn: 400, issuedDaysAgo: 695, verifications: [V(200)] });
-    await b.cred({ subject: { entity: "sac" }, type: "Pharmacy Permit", state: "CA", number: b.lic("CA", "pharmacy"), expiresIn: 62, issuedDaysAgo: 303, verifications: [V(250)] });
-    await b.cred({ subject: { entity: "sac" }, type: "Nonresident Pharmacy Permit", state: "AZ", number: b.lic("AZ", "pharmacy"), verifications: b.recent() });
+    await b.cred({ subject: { entity: "sac" }, type: "Pharmacy Permit", state: "CA", number: b.lic("CA", "pharmacy"), expiresIn: 62, issuedDaysAgo: 303, verifications: [V(195)] });
+    await b.cred({ subject: { entity: "sac" }, type: "Nonresident Pharmacy Permit", state: "AZ", number: b.lic("AZ", "pharmacy"), verifications: b.recent("AZ") });
     await b.cred({ subject: { entity: "sac" }, type: "DEA Registration", number: sac.deaNumber, verifications: b.recent() });
     await b.cred({ subject: { entity: "sac" }, type: "NPI", number: sac.npi, expiresIn: null, verifications: [V(b.between(20, 200), { method: "auto_api" })] });
     await b.cred({ subject: { entity: "sac" }, type: "Professional Liability Insurance", number: "DMI-PL-4471921", expiresIn: 210, issuedDaysAgo: 155 });
     // STORY: Priya's NV license expires in 21 days
     await b.cred({ subject: { person: "priya" }, type: "Pharmacist License", state: "NV", number: b.lic("NV", "pharmacist"), expiresIn: 21, issuedDaysAgo: 709, verifications: [V(280)] });
-    await b.cred({ subject: { person: "priya" }, type: "Pharmacist License", state: "CA", number: b.lic("CA", "pharmacist"), verifications: b.recent() });
-    await b.cred({ subject: { person: "priya" }, type: "Pharmacist License", state: "AZ", number: b.lic("AZ", "pharmacist"), verifications: b.recent() });
+    await b.cred({ subject: { person: "priya" }, type: "Pharmacist License", state: "CA", number: b.lic("CA", "pharmacist"), verifications: b.recent("CA") });
+    await b.cred({ subject: { person: "priya" }, type: "Pharmacist License", state: "AZ", number: b.lic("AZ", "pharmacist"), verifications: b.recent("AZ") });
     // STORY: Daniel's NV license renewed; the later verification caught the new expiry
     await b.cred({ subject: { person: "daniel" }, type: "Pharmacist License", state: "NV", number: b.lic("NV", "pharmacist"), expiresIn: 410, issuedDaysAgo: 1460, verifications: [V(280, { expirationSeen: D(45) }), V(120, { expirationSeen: D(410), expiresBefore: D(45), note: "Board shows renewal processed; expiration moved out one cycle." })] });
-    await b.cred({ subject: { person: "daniel" }, type: "Pharmacist License", state: "CA", number: b.lic("CA", "pharmacist"), verifications: b.recent() });
-    await b.cred({ subject: { person: "hannah" }, type: "Pharmacist License", state: "NV", number: b.lic("NV", "pharmacist"), verifications: b.recent() });
-    await b.cred({ subject: { person: "hannah" }, type: "Pharmacist License", state: "AZ", number: b.lic("AZ", "pharmacist"), verifications: b.recent() });
+    await b.cred({ subject: { person: "daniel" }, type: "Pharmacist License", state: "CA", number: b.lic("CA", "pharmacist"), verifications: b.recent("CA") });
+    await b.cred({ subject: { person: "hannah" }, type: "Pharmacist License", state: "NV", number: b.lic("NV", "pharmacist"), verifications: b.recent("NV") });
+    await b.cred({ subject: { person: "hannah" }, type: "Pharmacist License", state: "AZ", number: b.lic("AZ", "pharmacist"), verifications: b.recent("AZ") });
     // STORY: Elena, hired 75 days ago, never verified
     await b.cred({ subject: { person: "elena" }, type: "Pharmacist License", state: "CA", number: b.lic("CA", "pharmacist"), expiresIn: 300, issuedDaysAgo: 430, neverVerifiedSince: D(-75), notes: "New hire. Onboarding PSV not yet completed." });
-    await b.cred({ subject: { person: "elena" }, type: "Pharmacist License", state: "NV", number: b.lic("NV", "pharmacist"), verifications: b.recent() });
-    await b.cred({ subject: { person: "kevin" }, type: "Pharmacist License", state: "CA", number: b.lic("CA", "pharmacist"), verifications: b.recent() });
-    await b.cred({ subject: { person: "kevin" }, type: "Pharmacist License", state: "NV", number: b.lic("NV", "pharmacist"), verifications: b.recent() });
+    await b.cred({ subject: { person: "elena" }, type: "Pharmacist License", state: "NV", number: b.lic("NV", "pharmacist"), verifications: b.recent("NV") });
+    await b.cred({ subject: { person: "kevin" }, type: "Pharmacist License", state: "CA", number: b.lic("CA", "pharmacist"), verifications: b.recent("CA") });
+    await b.cred({ subject: { person: "kevin" }, type: "Pharmacist License", state: "NV", number: b.lic("NV", "pharmacist"), verifications: b.recent("NV") });
     for (const k of ["priya", "daniel", "hannah", "elena", "kevin"]) await b.cred({ subject: { person: k }, type: "NPI", number: b.P(k).npi, expiresIn: null, verifications: [V(b.between(20, 280), { method: "auto_api" })] });
     // STORY: Marcus's NV technician license expired 12 days ago, never verified
     await b.cred({ subject: { person: "marcus" }, type: "Pharmacy Technician License", state: "NV", number: b.lic("NV", "technician"), expiresIn: -12, issuedDaysAgo: 742, neverVerifiedSince: D(-12), notes: "Renewal application submitted to the board per Marcus; awaiting confirmation." });
-    await b.cred({ subject: { person: "aisha" }, type: "Pharmacy Technician License", state: "NV", number: b.lic("NV", "technician"), verifications: b.recent() });
-    await b.cred({ subject: { person: "tyler" }, type: "Pharmacy Technician License", state: "NV", number: b.lic("NV", "technician"), verifications: b.recent() });
-    await b.cred({ subject: { person: "tyler" }, type: "Pharmacy Technician License", state: "CA", number: b.lic("CA", "technician"), verifications: b.recent() });
-    await b.cred({ subject: { person: "sofia" }, type: "Pharmacy Technician License", state: "NV", number: b.lic("NV", "technician"), verifications: b.recent() });
+    await b.cred({ subject: { person: "aisha" }, type: "Pharmacy Technician License", state: "NV", number: b.lic("NV", "technician"), verifications: b.recent("NV") });
+    await b.cred({ subject: { person: "tyler" }, type: "Pharmacy Technician License", state: "NV", number: b.lic("NV", "technician"), verifications: b.recent("NV") });
+    await b.cred({ subject: { person: "tyler" }, type: "Pharmacy Technician License", state: "CA", number: b.lic("CA", "technician"), verifications: b.recent("CA") });
+    await b.cred({ subject: { person: "sofia" }, type: "Pharmacy Technician License", state: "NV", number: b.lic("NV", "technician"), verifications: b.recent("NV") });
     // STORY: Brianna's CA license expires in 45 days
-    await b.cred({ subject: { person: "brianna" }, type: "Pharmacy Technician License", state: "CA", number: b.lic("CA", "technician"), expiresIn: 45, issuedDaysAgo: 685, verifications: [V(280)] });
-    await b.cred({ subject: { person: "omar" }, type: "Pharmacy Technician License", state: "CA", number: b.lic("CA", "technician"), verifications: b.recent() });
-    await b.cred({ subject: { person: "omar" }, type: "Pharmacy Technician License", state: "NV", number: b.lic("NV", "technician"), verifications: b.recent() });
-    await b.cred({ subject: { person: "jordan" }, type: "Pharmacy Intern License", state: "NV", number: b.lic("NV", "intern"), verifications: b.recent() });
+    await b.cred({ subject: { person: "brianna" }, type: "Pharmacy Technician License", state: "CA", number: b.lic("CA", "technician"), expiresIn: 45, issuedDaysAgo: 685, verifications: [V(190)] });
+    await b.cred({ subject: { person: "omar" }, type: "Pharmacy Technician License", state: "CA", number: b.lic("CA", "technician"), verifications: b.recent("CA") });
+    await b.cred({ subject: { person: "omar" }, type: "Pharmacy Technician License", state: "NV", number: b.lic("NV", "technician"), verifications: b.recent("NV") });
+    await b.cred({ subject: { person: "jordan" }, type: "Pharmacy Intern License", state: "NV", number: b.lic("NV", "intern"), verifications: b.recent("NV") });
     // STORY: Dr. Okafor's DEA expires in 80 days
-    await b.cred({ subject: { person: "okafor" }, type: "Prescriber State License", state: "NV", number: b.lic("NV", "medical"), verifications: b.recent() });
+    await b.cred({ subject: { person: "okafor" }, type: "Prescriber State License", state: "NV", number: b.lic("NV", "medical"), verifications: b.recent("NV") });
     await b.cred({ subject: { person: "okafor" }, type: "DEA Registration", number: fakeDea(b.rand, "Okafor", "B"), expiresIn: 80, issuedDaysAgo: 1015, verifications: [V(200)] });
     await b.cred({ subject: { person: "okafor" }, type: "NPI", number: b.P("okafor").npi, expiresIn: null, verifications: [V(b.between(20, 280), { method: "auto_api" })] });
-    await b.cred({ subject: { person: "moreau" }, type: "Prescriber State License", state: "CA", number: b.lic("CA", "medical"), verifications: b.recent() });
+    await b.cred({ subject: { person: "moreau" }, type: "Prescriber State License", state: "CA", number: b.lic("CA", "medical"), verifications: b.recent("CA") });
     await b.cred({ subject: { person: "moreau" }, type: "DEA Registration", number: fakeDea(b.rand, "Moreau", "B"), verifications: b.recent() });
     await b.cred({ subject: { person: "moreau" }, type: "NPI", number: b.P("moreau").npi, expiresIn: null, verifications: [V(b.between(20, 280), { method: "auto_api" })] });
-    await b.cred({ subject: { person: "adeyemi" }, type: "Prescriber State License", state: "NV", number: b.lic("NV", "medical"), verifications: b.recent() });
+    await b.cred({ subject: { person: "adeyemi" }, type: "Prescriber State License", state: "NV", number: b.lic("NV", "medical"), verifications: b.recent("NV") });
     await b.cred({ subject: { person: "adeyemi" }, type: "DEA Registration", number: fakeDea(b.rand, "Adeyemi", "B"), verifications: b.recent() });
     await b.cred({ subject: { person: "adeyemi" }, type: "NPI", number: b.P("adeyemi").npi, expiresIn: null, verifications: [V(b.between(20, 280), { method: "auto_api" })] });
     const staff = SIERRA.people.filter((p) => p.role !== "prescriber" && p.active !== false).map((p) => p.key);
@@ -496,13 +528,13 @@ const HARBOR: OrgSpec = {
     await b.cred({ subject: { entity: "main" }, type: "DEA Registration", number: main.deaNumber, verifications: b.recent() });
     await b.cred({ subject: { entity: "main" }, type: "NPI", number: main.npi, expiresIn: null, verifications: [V(b.between(20, 200), { method: "auto_api" })] });
     await b.cred({ subject: { entity: "main" }, type: "Professional Liability Insurance", number: "DMI-PL-5520018", expiresIn: 95, issuedDaysAgo: 270 });
-    await b.cred({ subject: { person: "dana" }, type: "Pharmacist License", state: "CA", number: b.lic("CA", "pharmacist"), verifications: b.recent() });
+    await b.cred({ subject: { person: "dana" }, type: "Pharmacist License", state: "CA", number: b.lic("CA", "pharmacist"), verifications: b.recent("CA") });
     await b.cred({ subject: { person: "felix" }, type: "Pharmacist License", state: "CA", number: b.lic("CA", "pharmacist"), expiresIn: 38, issuedDaysAgo: 692, verifications: b.recent() });
     for (const k of ["dana", "felix"]) await b.cred({ subject: { person: k }, type: "NPI", number: b.P(k).npi, expiresIn: null, verifications: [V(b.between(20, 200), { method: "auto_api" })] });
-    await b.cred({ subject: { person: "grace" }, type: "Pharmacy Technician License", state: "CA", number: b.lic("CA", "technician"), verifications: b.recent() });
-    await b.cred({ subject: { person: "mateo" }, type: "Pharmacy Technician License", state: "CA", number: b.lic("CA", "technician"), verifications: b.recent() });
+    await b.cred({ subject: { person: "grace" }, type: "Pharmacy Technician License", state: "CA", number: b.lic("CA", "technician"), verifications: b.recent("CA") });
+    await b.cred({ subject: { person: "mateo" }, type: "Pharmacy Technician License", state: "CA", number: b.lic("CA", "technician"), verifications: b.recent("CA") });
     await b.cred({ subject: { person: "nina" }, type: "Pharmacy Technician License", state: "CA", number: b.lic("CA", "technician"), expiresIn: -3, issuedDaysAgo: 733, verifications: [V(200)], notes: "Renewal fee paid; board shows pending." });
-    await b.cred({ subject: { person: "bauer" }, type: "Prescriber State License", state: "CA", number: b.lic("CA", "medical"), verifications: b.recent() });
+    await b.cred({ subject: { person: "bauer" }, type: "Prescriber State License", state: "CA", number: b.lic("CA", "medical"), verifications: b.recent("CA") });
     await b.cred({ subject: { person: "bauer" }, type: "DEA Registration", number: fakeDea(b.rand, "Bauer", "B"), verifications: b.recent() });
     await b.cred({ subject: { person: "bauer" }, type: "NPI", number: b.P("bauer").npi, expiresIn: null, verifications: [V(b.between(20, 200), { method: "auto_api" })] });
     const staff = HARBOR.people.filter((p) => p.role !== "prescriber").map((p) => p.key);
@@ -542,25 +574,25 @@ const PRAIRIE: OrgSpec = {
     const V = b.V.bind(b);
     const tulsa = b.E("tulsa");
     const dallas = b.E("dallas");
-    await b.cred({ subject: { entity: "tulsa" }, type: "Pharmacy Permit", state: "OK", number: b.lic("OK", "pharmacy"), verifications: b.recent() });
+    await b.cred({ subject: { entity: "tulsa" }, type: "Pharmacy Permit", state: "OK", number: b.lic("OK", "pharmacy"), verifications: b.recent("OK") });
     await b.cred({ subject: { entity: "tulsa" }, type: "Nonresident Pharmacy Permit", state: "KS", number: b.lic("KS", "pharmacy") });
     await b.cred({ subject: { entity: "tulsa" }, type: "Nonresident Pharmacy Permit", state: "MO", number: b.lic("MO", "pharmacy") });
     await b.cred({ subject: { entity: "tulsa" }, type: "DEA Registration", number: tulsa.deaNumber, verifications: b.recent() });
     await b.cred({ subject: { entity: "tulsa" }, type: "NPI", number: tulsa.npi, expiresIn: null, verifications: [V(b.between(2, 40), { method: "auto_api" })] });
     await b.cred({ subject: { entity: "tulsa" }, type: "Professional Liability Insurance", number: "DMI-PL-7710442", expiresIn: 310, issuedDaysAgo: 55 });
-    await b.cred({ subject: { entity: "dallas" }, type: "Pharmacy Permit", state: "TX", number: b.lic("TX", "pharmacy"), verifications: b.recent() });
+    await b.cred({ subject: { entity: "dallas" }, type: "Pharmacy Permit", state: "TX", number: b.lic("TX", "pharmacy"), verifications: b.recent("TX") });
     await b.cred({ subject: { entity: "dallas" }, type: "DEA Registration", number: dallas.deaNumber });
     await b.cred({ subject: { entity: "dallas" }, type: "NPI", number: dallas.npi, expiresIn: null, verifications: [V(b.between(2, 40), { method: "auto_api" })] });
-    await b.cred({ subject: { person: "tom" }, type: "Pharmacist License", state: "OK", number: b.lic("OK", "pharmacist"), verifications: b.recent() });
+    await b.cred({ subject: { person: "tom" }, type: "Pharmacist License", state: "OK", number: b.lic("OK", "pharmacist"), verifications: b.recent("OK") });
     await b.cred({ subject: { person: "tom" }, type: "Pharmacist License", state: "KS", number: b.lic("KS", "pharmacist") });
-    await b.cred({ subject: { person: "asha" }, type: "Pharmacist License", state: "OK", number: b.lic("OK", "pharmacist"), verifications: b.recent() });
+    await b.cred({ subject: { person: "asha" }, type: "Pharmacist License", state: "OK", number: b.lic("OK", "pharmacist"), verifications: b.recent("OK") });
     await b.cred({ subject: { person: "asha" }, type: "Pharmacist License", state: "MO", number: b.lic("MO", "pharmacist") });
-    await b.cred({ subject: { person: "cole" }, type: "Pharmacist License", state: "TX", number: b.lic("TX", "pharmacist"), verifications: b.recent() });
+    await b.cred({ subject: { person: "cole" }, type: "Pharmacist License", state: "TX", number: b.lic("TX", "pharmacist"), verifications: b.recent("TX") });
     for (const k of ["tom", "asha", "cole"]) await b.cred({ subject: { person: k }, type: "NPI", number: b.P(k).npi, expiresIn: null, verifications: [V(b.between(2, 40), { method: "auto_api" })] });
-    await b.cred({ subject: { person: "lena" }, type: "Pharmacy Technician License", state: "OK", number: b.lic("OK", "technician"), verifications: b.recent() });
+    await b.cred({ subject: { person: "lena" }, type: "Pharmacy Technician License", state: "OK", number: b.lic("OK", "technician"), verifications: b.recent("OK") });
     await b.cred({ subject: { person: "jamal" }, type: "Pharmacy Technician License", state: "OK", number: b.lic("OK", "technician") });
     await b.cred({ subject: { person: "sun" }, type: "Pharmacy Technician License", state: "TX", number: b.lic("TX", "technician"), expiresIn: 25, issuedDaysAgo: 705 });
-    await b.cred({ subject: { person: "rosa" }, type: "Pharmacy Technician License", state: "TX", number: b.lic("TX", "technician"), verifications: b.recent() });
+    await b.cred({ subject: { person: "rosa" }, type: "Pharmacy Technician License", state: "TX", number: b.lic("TX", "technician"), verifications: b.recent("TX") });
     await b.cred({ subject: { person: "harper" }, type: "Prescriber State License", state: "OK", number: b.lic("OK", "medical") });
     await b.cred({ subject: { person: "harper" }, type: "DEA Registration", number: fakeDea(b.rand, "Harper", "B") });
     await b.cred({ subject: { person: "harper" }, type: "NPI", number: b.P("harper").npi, expiresIn: null, verifications: [V(b.between(2, 40), { method: "auto_api" })] });
@@ -586,6 +618,9 @@ async function seedOrg(spec: OrgSpec) {
     b.types = new Map((await db.credentialType.findMany()).map((t) => [t.name, t]));
     b.lookups = await db.boardLookup.findMany();
 
+    for (const st of spec.states) {
+      await db.orgJurisdiction.create({ data: { orgId: org.id, state: st, addedOn: D(-(spec.stateAdded?.[st] ?? spec.termStartedDaysAgo)), note: spec.stateAdded?.[st] !== undefined && spec.stateAdded[st] !== spec.termStartedDaysAgo ? "Added mid-term; board lookups configured by 2Verify" : "Subscribed at onboarding" } });
+    }
     const admin = await db.user.create({ data: { orgId: org.id, email: `admin@${spec.slug}.example.com`, name: spec.adminName, role: "org_admin", passwordHash: await bcrypt.hash(ADMIN_PASSWORD, 10) } });
     b.verifierIds = [admin.id];
     for (const u of spec.extraUsers ?? []) {

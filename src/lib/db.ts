@@ -21,7 +21,7 @@ export interface OrgScope {
 export const orgContext = new AsyncLocalStorage<OrgScope>();
 
 /** Models that carry org_id and are filtered by it. User and AuditLog have nullable org_id; see below. */
-const SCOPED = new Set(["Entity", "Person", "Credential", "Verification", "ScreeningRun", "ScreeningMatch", "Alert", "CreditLedger", "AuditLog"]);
+const SCOPED = new Set(["Entity", "Person", "Credential", "Verification", "ScreeningRun", "ScreeningMatch", "Alert", "CreditLedger", "OrgJurisdiction", "AuditLog"]);
 /** Scoped on reads only when an org is in scope; writes get org_id when present but never throw for null. */
 const NULLABLE_ORG = new Set(["AuditLog"]);
 const UNAUDITED = new Set(["AuditLog"]);

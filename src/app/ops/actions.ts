@@ -51,6 +51,7 @@ export async function createOrgAction(_prev: ActionState, formData: FormData): P
         data: { name: d.name, slug: d.slug, planId: plan.id, status: d.status, subscribedStates: [...new Set(d.states ?? [])].sort(), termStartsOn: dateOnly(new Date()) },
       });
       id = org.id;
+      for (const st of org.subscribedStates) await db.orgJurisdiction.create({ data: { orgId: org.id, state: st, addedOn: dateOnly(new Date()), note: "Subscribed at onboarding" } });
       if (plan.creditsPerYear > 0) await postCredits({ orgId: org.id, delta: plan.creditsPerYear, reason: "allotment", note: `Annual allotment (${plan.name})`, createdById: op.userId });
       const tempPassword = randomBytes(9).toString("base64url");
       await db.user.create({ data: { orgId: org.id, email: d.adminEmail, name: d.adminName, role: "org_admin", passwordHash: await hashPassword(tempPassword) } });
@@ -105,4 +106,31 @@ export async function setOrgStatusAction(orgId: string, status: "trial" | "activ
   });
   revalidatePath(`/ops/orgs/${orgId}`);
   revalidatePath("/ops");
+}
+
+const jurisdictionSchema = z.object({ state: z.string().trim().toUpperCase().length(2), note: zOptStr });
+
+/** Operator adds a jurisdiction to a customer: history row, current set for pricing, and a note of what was set up. */
+export async function addJurisdictionAction(orgId: string, _prev: ActionState, formData: FormData): Promise<ActionState> {
+  const parsed = parseForm(jurisdictionSchema, formData);
+  if ("error" in parsed) return { error: parsed.error };
+  const d = parsed.data;
+  try {
+    await withOperator(async () => {
+      const org = await db.org.findUniqueOrThrow({ where: { id: orgId } });
+      if (org.subscribedStates.includes(d.state)) throw new Error(`${d.state} is already subscribed`);
+      if (org.subscribedStates.length >= 51) throw new Error("Maximum of 51 jurisdictions");
+      await db.org.update({ where: { id: orgId }, data: { subscribedStates: [...org.subscribedStates, d.state].sort() } });
+      await db.orgJurisdiction.upsert({
+        where: { orgId_state: { orgId, state: d.state } },
+        create: { orgId, state: d.state, addedOn: dateOnly(new Date()), note: d.note ?? "Added by 2Verify" },
+        update: { addedOn: dateOnly(new Date()), removedOn: null, note: d.note ?? "Re-added by 2Verify" },
+      });
+    });
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
+  revalidatePath(`/ops/orgs/${orgId}`);
+  revalidatePath("/ops");
+  return { ok: true, message: `${d.state} added. Board lookups for ${d.state} must exist under Settings → Board lookups before the queue can route its licenses.` };
 }
