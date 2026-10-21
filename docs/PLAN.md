@@ -1,6 +1,6 @@
 # Pharmacy Compliance Tracker — Phase 0 build plan (for approval)
 
-Status: **approved Oct 21, 2026. Session one (scaffold, migration, seed) is built; session two builds the pages and jobs.**
+Status: **approved Oct 21, 2026. Sessions one and two are built: the Phase 0 demo is complete.** Phase 1 (their data: CSV import, seed wipe, their states and recipients, deploy) is next.
 Source: the Oct 20, 2026 build brief. This document covers the three things the
 brief asked for up front: the Prisma schema, the page list, and the seed-data plan.
 
@@ -228,7 +228,20 @@ Items 1–3 are session one. Items 4–6 are session two.
   name; a name-only match with no DOB is capped at 0.9. So LEIE (which carries DOBs) produces zero
   matches on the demo roster and SAM produces the one Okafor near-miss at 0.90.
 
-## 6. Open questions (non-blocking; defaults stated)
+## 6. Session two notes
+
+- Every Phase 0 page in the table above is built, plus `/audit`, `/settings`, `/settings/credential-types`
+  (editable) and `/settings/board-lookups` (editable), which were pencilled in for Phase 1.
+- `/import` (CSV with column mapping and dry run) remains Phase 1.
+- The verify page's screenshot capture is paste-or-upload (no browser extension). A pasted image is
+  attached to the file input through a DataTransfer, so the form submits it like any upload.
+- Server actions accept bodies up to 25 MB for evidence screenshots (`next.config.ts`).
+- Screening and NPPES each have a `live` and a `fixture` mode set by env; `.env.example` defaults to
+  live. The demo `.env` uses fixture so the walkthrough needs no network.
+- The dashboard "Expiring ≤ 90 days" tile includes the ≤ 30 ones, so the demo shows 2 / 5 / 1 / 1 and
+  a fifth tile for "Verification due".
+
+## 7. Open questions (non-blocking; defaults stated)
 
 - **Screenshot capture.** Default for Phase 0: paste (Ctrl+V) or file upload into
   the verify form. The browser extension in the brief is Phase 4.

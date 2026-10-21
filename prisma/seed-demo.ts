@@ -19,9 +19,9 @@ import { fakeDea, fakeLicenseNumber, fakeNpi, mulberry32 } from "../src/lib/ids"
 import { addDays, dateOnly, firstOfMonth, isoDate } from "../src/lib/dates";
 import { computeNextVerifyDue, computeStatus, expiryAlertsDueBy } from "../src/lib/status";
 import { leieRowToRecord, matchRoster, parseCsv, type ExclusionRecord } from "../src/lib/matching";
-import { placeholderBoardScreenshot, placeholderCertificatePdf, screeningReportPdf } from "./seed-lib/evidence";
-import { fakeNppesResponse, TAXONOMY } from "./seed-lib/nppes";
-import { fillTemplate } from "./seed-lib/catalog";
+import { placeholderBoardScreenshot, placeholderCertificatePdf, screeningReportPdf } from "../src/lib/evidence";
+import { fakeNppesResponse, TAXONOMY } from "../src/lib/nppes-fixture";
+import { fillTemplate } from "../src/lib/board";
 
 const rand = mulberry32(20261020);
 const today = dateOnly(new Date());

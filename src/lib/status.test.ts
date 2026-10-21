@@ -11,8 +11,9 @@ describe("computeStatus", () => {
     expect(computeStatus({ expiresOn: addDays(today, 90), renewalLeadDays: 90, latestResult: null }, today)).toBe("expiring");
     expect(computeStatus({ expiresOn: addDays(today, 91), renewalLeadDays: 90, latestResult: null }, today)).toBe("active");
   });
-  it("suspended sticks regardless of dates", () => {
+  it("suspended sticks regardless of dates; not_found makes the record unknown", () => {
     expect(computeStatus({ expiresOn: addDays(today, 400), renewalLeadDays: 90, latestResult: "suspended" }, today)).toBe("suspended");
+    expect(computeStatus({ expiresOn: addDays(today, 400), renewalLeadDays: 90, latestResult: "not_found" }, today)).toBe("unknown");
   });
   it("non-expiring credentials are unknown until verified", () => {
     expect(computeStatus({ expiresOn: null, renewalLeadDays: 0, latestResult: null }, today)).toBe("unknown");

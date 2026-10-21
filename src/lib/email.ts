@@ -22,8 +22,15 @@ function getTransport() {
   return transport;
 }
 
-/** Sends one message. Throws on transport failure; callers decide whether that is fatal. */
+/**
+ * Sends one message. Throws on transport failure; callers decide whether that is fatal.
+ * MAIL_DRIVER=log prints instead of sending (tests, environments without SMTP).
+ */
 export async function sendMail(mail: Mail) {
+  if ((process.env.MAIL_DRIVER ?? "smtp") === "log") {
+    console.log(`[mail:log] to=${Array.isArray(mail.to) ? mail.to.join(",") : mail.to} subject="${mail.subject}" attachments=${mail.attachments?.length ?? 0}`);
+    return;
+  }
   await getTransport().sendMail({ from: process.env.MAIL_FROM ?? "compliance@example.com", ...mail });
 }
 

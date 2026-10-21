@@ -12,6 +12,10 @@ const NAV = [
   { href: "/screening", label: "Screening" },
   { href: "/reports", label: "Reports" },
 ];
+const ADMIN_NAV = [
+  { href: "/audit", label: "Audit" },
+  { href: "/settings", label: "Settings" },
+];
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const session = await requireSession();
@@ -23,7 +27,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             Compliance Tracker
           </Link>
           <nav className="hidden gap-4 text-sm text-muted-foreground md:flex">
-            {NAV.map((n) => (
+            {[...NAV, ...(session.role === "admin" ? ADMIN_NAV : [])].map((n) => (
               <Link key={n.href} href={n.href} className="hover:text-foreground">
                 {n.label}
               </Link>

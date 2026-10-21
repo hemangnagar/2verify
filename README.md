@@ -4,9 +4,11 @@ Single-tenant credential tracking and primary source verification (PSV) for a sm
 group: licenses, permits, registrations, insurance, training, monthly OIG/SAM exclusion
 screening, and audit-ready evidence for URAC/ACHC surveys. Replaces a spreadsheet. No patient data.
 
-Status: **Phase 0, session one** — schema, migration, auth, storage, audited data layer, and the
-"Sierra Specialty Pharmacy" demo seed. Pages beyond login and the dashboard tiles land in session two.
-See `docs/PLAN.md` for the full page list and build order.
+Status: **Phase 0 demo complete.** Dashboard, credential records with document upload, people and
+locations, the guided state-board verification workflow with screenshot evidence, monthly OIG/SAM
+exclusion screening with match review, survey-pack and CSV exports, the audit log viewer, settings,
+and the nightly and monthly jobs, all pre-loaded with the "Sierra Specialty Pharmacy" demo.
+See `docs/PLAN.md` for the page list, decisions, and what comes in Phase 1 (their data).
 
 ## Quickstart (Docker)
 
@@ -81,19 +83,41 @@ npm run dev
 - **`src/lib/matching.ts`** — OIG LEIE / SAM matching: exact NPI → exact name+DOB → Jaro-Winkler
   name match. A differing DOB rules a record out; a name-only match with no DOB is capped at 0.9 and
   flagged for review at ≥ 0.8.
+- **`src/lib/nightly.ts`, `src/lib/screening.ts`, `src/lib/nppes.ts`, `src/lib/reports.ts`** — the job and
+  report logic, shared by the cron scripts and the in-app "Run now" / export buttons.
 - **`prisma/seed-demo.ts`** — the demo. Dates are relative to the run date, so the story holds
   whenever it is shown: 2 expiring ≤30 days, 3 more ≤90, 1 technician license 12 days overdue with
   a full 90/60/30/7/overdue alert history, 1 new-hire pharmacist never verified, one renewal caught
   by re-verification (status_change alert), two screening runs for last month with one pending SAM
   fuzzy match on a prescriber. Fixture extracts live in `prisma/fixtures/`.
 
-## Monthly runbook (to be completed in session two)
+## Demo walkthrough (15 minutes)
 
-1. Cron runs `jobs/screening.ts` for `oig_leie` and `sam` on the 1st; reports are stored even with zero matches.
-2. Admin opens Screening → pending matches, reviews each against the source record, sets a disposition.
-3. Nightly `jobs/nightly.ts` recomputes statuses and sends lead/overdue alerts; the verify queue lists
-   anything due within 30 days.
-4. Before a survey: Reports → Survey pack (PDF per location + evidence ZIP).
+`make demo` loads everything below. Sign in as the admin.
+
+1. **Dashboard.** Tiles read 2 expiring ≤30 days, 5 ≤90, 1 overdue, 1 never verified. Click a tile to switch the list; filter by location, person, type.
+2. **A credential record.** Open Marcus Delgado's NV technician license: expired 12 days ago, certificate attached, alert history shows the 90/60/30/7-day and overdue emails, verification history is empty.
+3. **Verify it.** Click "Verify now". The NV board link opens pre-built, the license number and name are one click to copy, record what the board shows, paste a screenshot, save. The evidence record appears, locked, and the credential's next verification date moves out a year. If the board showed a different expiry or status, the record is updated and the compliance lead gets a status_change email.
+4. **Exclusion screening.** Screening → last month's runs: 17 screened, 0 LEIE matches, 1 SAM match. Open Match review, compare Dr. Okafor against the Ohio record, dismiss as a false positive with a note. The decision is logged with reviewer and time. "Run now" repeats the screening live (or against the fixture in demo mode).
+5. **Survey pack.** Reports → PDF for Sierra Specialty Pharmacy: every active credential with last verification, method, result, and the evidence thumbnail. The ZIP holds the full-size files with a manifest.
+6. **Audit.** Every change above is in the audit log, filterable by table, user, and row.
+
+## Jobs and the monthly runbook
+
+| Job | Schedule (cron container) | Does |
+|---|---|---|
+| `jobs/nightly.ts` | 02:00 daily | Recomputes every credential's status and next verification date; sends 90/60/30/7-day lead alerts, overdue alerts, and verification-due alerts not yet sent for the current cycle. Idempotent: running it twice sends nothing twice. `--today YYYY-MM-DD` runs it as of another date. |
+| `jobs/screening.ts --source oig_leie` | 03:00 on the 1st | Downloads the LEIE CSV (`SCREENING_MODE=live`) or loads the fixture, matches all active people, stores run + matches + PDF report, emails admins with the report attached. |
+| `jobs/screening.ts --source sam` | 03:30 on the 1st | Same against SAM.gov Exclusions API v4 (needs `SAM_API_KEY`, free at sam.gov). |
+
+Monthly, the compliance lead:
+
+1. Checks the two screening emails on the 1st (or Screening → both runs present for the month). If a run is missing, `make screening`.
+2. Opens Screening → Match review and sets a disposition on every pending match. Confirmed matches are a personnel matter outside this system; the record stays here as evidence.
+3. Works the Verify queue until it is empty: each item takes about a minute.
+4. Before a survey: Reports → Survey pack PDF + evidence ZIP per location, plus the screening history CSV.
+
+NPPES: saving a person or location with an NPI runs an NPPES lookup (`NPPES_MODE=live`) and records an automated verification on their NPI credential with the JSON response as evidence. "Re-check NPI" on the person page repeats it.
 
 ## Security notes
 

@@ -20,6 +20,7 @@ export interface StatusInput {
 export function computeStatus(input: StatusInput, today: Date = new Date()): CredentialStatus {
   const t = dateOnly(today);
   if (input.latestResult === "suspended") return "suspended";
+  if (input.latestResult === "not_found") return "unknown";
   if (input.expiresOn) {
     const left = daysBetween(t, input.expiresOn);
     if (left < 0) return "expired";
@@ -27,7 +28,7 @@ export function computeStatus(input: StatusInput, today: Date = new Date()): Cre
     return "active";
   }
   if (input.latestResult === null) return "unknown";
-  if (input.latestResult === "not_found" || input.latestResult === "expired") return "unknown";
+  if (input.latestResult === "expired") return "unknown";
   return "active";
 }
 
