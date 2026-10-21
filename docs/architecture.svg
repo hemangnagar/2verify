@@ -1,0 +1,175 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="1060" viewBox="0 0 1500 1060" font-family="Inter, Helvetica, Arial, sans-serif" font-size="13">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#475569"/></marker>
+    <style>
+      .box{fill:#fff;stroke:#334155;stroke-width:1.4;rx:8}
+      .zone{fill:#f8fafc;stroke:#94a3b8;stroke-width:1.2;stroke-dasharray:6 4;rx:12}
+      .ext{fill:#fff7ed;stroke:#c2410c;stroke-width:1.4;rx:8}
+      .data{fill:#eff6ff;stroke:#1d4ed8;stroke-width:1.4;rx:8}
+      .title{font-size:15px;font-weight:700;fill:#0f172a}
+      .h{font-size:13px;font-weight:700;fill:#0f172a}
+      .t{fill:#334155}
+      .s{fill:#64748b;font-size:11.5px}
+      .zl{font-size:12px;font-weight:700;fill:#475569;letter-spacing:.06em}
+      .edge{stroke:#475569;stroke-width:1.3;fill:none;marker-end:url(#a)}
+      .lbl{fill:#475569;font-size:11px}
+      .no{fill:#b91c1c;font-size:12px}
+    </style>
+  </defs>
+
+  <text x="24" y="34" class="title">2Verify — what is actually running (Oct 2026)</text>
+  <text x="24" y="54" class="s">One Node.js app, one Postgres, one object store, one cron container. No Kafka, no Kubernetes, no Redis, no message queue, no serverless, no microservices.</text>
+
+  <!-- USERS -->
+  <rect x="24" y="80" width="300" height="150" class="zone"/>
+  <text x="40" y="100" class="zl">USERS (browser)</text>
+  <rect x="40" y="112" width="268" height="30" class="box"/><text x="52" y="132" class="t"><tspan class="h">Operator</tspan> (2Verify staff) → /ops console</text>
+  <rect x="40" y="150" width="268" height="30" class="box"/><text x="52" y="170" class="t"><tspan class="h">Org admin</tspan> (customer) → dashboard, settings</text>
+  <rect x="40" y="188" width="268" height="30" class="box"/><text x="52" y="208" class="t"><tspan class="h">Verifier</tspan> → queue, guided workbench</text>
+
+  <!-- APP CONTAINER -->
+  <rect x="360" y="80" width="760" height="540" class="zone"/>
+  <text x="376" y="100" class="zl">APP CONTAINER — Next.js 15 (Node 22), one process serves UI + API</text>
+
+  <!-- frontend -->
+  <rect x="376" y="112" width="350" height="226" class="box"/>
+  <text x="390" y="132" class="h">Frontend (server-rendered React 19)</text>
+  <text x="390" y="152" class="t">Next.js App Router pages, Tailwind 4, shadcn/ui (vendored)</text>
+  <text x="390" y="170" class="s">Pages: dashboard · credentials · people · locations · verify queue +</text>
+  <text x="390" y="186" class="s">workbench · screening + match review · reports · usage · audit ·</text>
+  <text x="390" y="202" class="s">settings (types, board lookups, automated boards) · /ops console</text>
+  <text x="390" y="224" class="t">Client JS only for forms, paste-screenshot, copy buttons</text>
+  <text x="390" y="246" class="t">Auth: email + bcrypt password → signed JWT cookie (jose)</text>
+  <text x="390" y="264" class="t">Roles: operator · org_admin · verifier; operator "switch into org"</text>
+  <text x="390" y="286" class="t">Files reach the browser only via 10-min signed URLs</text>
+  <text x="390" y="304" class="s">middleware.ts redirects anonymous requests to /login</text>
+  <text x="390" y="322" class="s">Mobile: responsive web only. No native app, no PWA.</text>
+
+  <!-- backend -->
+  <rect x="744" y="112" width="360" height="226" class="box"/>
+  <text x="758" y="132" class="h">Backend (same process): server actions + route handlers</text>
+  <text x="758" y="152" class="t">src/lib/db.ts — Prisma 6 client with two extensions:</text>
+  <text x="772" y="168" class="s">org scoping (every read/write filtered to the org in context)</text>
+  <text x="772" y="184" class="s">audit (every create/update/delete → audit_log row)</text>
+  <text x="758" y="204" class="t">verifications.ts — verification row + credit debit, one transaction</text>
+  <text x="758" y="222" class="t">boards/ — Texas adapter on headless Chromium (playwright-core)</text>
+  <text x="758" y="240" class="t">screening.ts — LEIE/SAM matching (Jaro-Winkler, DOB rule)</text>
+  <text x="758" y="258" class="t">nppes.ts — NPI lookup · nightly.ts — status + alerts</text>
+  <text x="758" y="276" class="t">reports.ts — survey-pack PDF (pdfkit), evidence ZIP (jszip), CSV</text>
+  <text x="758" y="294" class="t">pricing.ts — plans, $400/state, usage, overage projection</text>
+  <text x="758" y="312" class="t">email.ts — nodemailer (SMTP) · storage.ts — S3 or local driver</text>
+  <text x="758" y="330" class="s">Route handlers: /api/files (signed), /api/reports (PDF/ZIP/CSV)</text>
+
+  <!-- cron -->
+  <rect x="376" y="356" width="728" height="110" class="box"/>
+  <text x="390" y="376" class="h">Cron container (same Docker image, plain crond; no queue, no workers)</text>
+  <text x="390" y="396" class="t">02:00 daily  jobs/nightly.ts — per org: run enabled board adapters for due credentials → recompute status → send 90/60/30/7, overdue, verify-due emails (idempotent)</text>
+  <text x="390" y="414" class="t">03:00 1st    jobs/screening.ts --source oig_leie — per org: download LEIE CSV, match roster, store PDF report, email admins (no credits)</text>
+  <text x="390" y="432" class="t">03:30 1st    jobs/screening.ts --source sam — same against SAM.gov Exclusions API (needs SAM_API_KEY)</text>
+  <text x="390" y="452" class="s">Scale assumption: hundreds of orgs × hundreds of credentials fits in-process loops. A queue (e.g. BullMQ on Redis) becomes worth it only if one job exceeds the night.</text>
+
+  <!-- in-process libs -->
+  <rect x="376" y="484" width="728" height="118" class="box"/>
+  <text x="390" y="504" class="h">Headless browser, inside the app and cron containers</text>
+  <text x="390" y="524" class="t">playwright-core launches Chromium per lookup (PW_CHROMIUM_PATH or the image's bundled browser). 20 s timeout, one retry, 1 query / 5 s per board, descriptive User-Agent.</text>
+  <text x="390" y="542" class="t">Adapters are registered in code (src/lib/boards/index.ts) and enabled per (state, credential type) by a board_adapter row. Today: TX pharmacy permits.</text>
+  <text x="390" y="560" class="t">Never bypasses a CAPTCHA or bot challenge. CA (Cloudflare human check) and every other board stay on the guided workbench.</text>
+  <text x="390" y="586" class="s">Docker image: node:22-bookworm-slim + Chromium (moved off Alpine for this). Standalone Next build (server.js).</text>
+
+  <!-- DATA -->
+  <rect x="1160" y="80" width="316" height="540" class="zone"/>
+  <text x="1176" y="100" class="zl">DATA</text>
+  <rect x="1176" y="112" width="284" height="250" class="data"/>
+  <text x="1190" y="132" class="h">PostgreSQL 16 (one database)</text>
+  <text x="1190" y="152" class="t">Prisma migrations (hand-edited where needed)</text>
+  <text x="1190" y="172" class="t">Platform: plan · org · org_jurisdiction · user</text>
+  <text x="1190" y="190" class="t">Catalog: credential_type · board_lookup · board_adapter</text>
+  <text x="1190" y="208" class="t">Customer (org_id on every row): entity · person ·</text>
+  <text x="1190" y="224" class="t">credential · alert · screening_run · screening_match</text>
+  <text x="1190" y="244" class="t">Insert-only (DB triggers): verification ·</text>
+  <text x="1190" y="260" class="t">credit_ledger · audit_log</text>
+  <text x="1190" y="282" class="s">Constraints: per-org uniqueness, one primary entity</text>
+  <text x="1190" y="298" class="s">per org, credential subject CHECK, wipe only under</text>
+  <text x="1190" y="314" class="s">SET LOCAL app.allow_wipe (seed-wipe)</text>
+  <text x="1190" y="338" class="s">Dev: local Postgres or Compose. Prod: Compose volume or managed PG.</text>
+
+  <rect x="1176" y="378" width="284" height="120" class="data"/>
+  <text x="1190" y="398" class="h">Object storage (private bucket)</text>
+  <text x="1190" y="418" class="t">S3-compatible: MinIO (local) · R2 or S3 (prod)</text>
+  <text x="1190" y="436" class="t">Keys: {org}/{entity}/{table}/{row}/{ts}-{file}</text>
+  <text x="1190" y="454" class="t">Evidence PNG/JSON, certificates, screening PDFs</text>
+  <text x="1190" y="472" class="s">Metadata stamped: verifier, time, source URL.</text>
+  <text x="1190" y="488" class="s">"local" driver writes ./data/files for dev.</text>
+
+  <rect x="1176" y="514" width="284" height="92" class="data"/>
+  <text x="1190" y="534" class="h">Email (outbound only)</text>
+  <text x="1190" y="554" class="t">SMTP via nodemailer: Mailpit (local) ·</text>
+  <text x="1190" y="572" class="t">SES or Resend (prod). MAIL_DRIVER=log for tests.</text>
+  <text x="1190" y="592" class="s">Alerts, screening reports, operator invites.</text>
+
+  <!-- EXTERNAL -->
+  <rect x="24" y="650" width="1452" height="200" class="zone"/>
+  <text x="40" y="670" class="zl">EXTERNAL SOURCES (all free; reached from the app/cron containers)</text>
+  <rect x="40" y="684" width="270" height="146" class="ext"/>
+  <text x="54" y="704" class="h">NPPES NPI Registry</text>
+  <text x="54" y="722" class="t">Public JSON API, no key</text>
+  <text x="54" y="740" class="t">On save + "Re-check NPI" → auto_api verification,</text>
+  <text x="54" y="756" class="t">JSON response stored as evidence, 1 credit</text>
+  <text x="54" y="778" class="s">NPPES_MODE=live | fixture | off</text>
+  <text x="54" y="798" class="s">PECOS monthly match: planned (Phase 2), not built</text>
+
+  <rect x="326" y="684" width="270" height="146" class="ext"/>
+  <text x="340" y="704" class="h">OIG LEIE · SAM.gov Exclusions</text>
+  <text x="340" y="722" class="t">LEIE: monthly CSV download (UPDATED.csv)</text>
+  <text x="340" y="740" class="t">SAM: REST API v4, free key, one query per name</text>
+  <text x="340" y="758" class="t">Monthly, all active people; free (no credits)</text>
+  <text x="340" y="780" class="s">SCREENING_MODE=live | fixture</text>
+  <text x="340" y="798" class="s">Synthetic fixtures in prisma/fixtures for the demo</text>
+
+  <rect x="612" y="684" width="270" height="146" class="ext"/>
+  <text x="626" y="704" class="h">Texas State Board of Pharmacy</text>
+  <text x="626" y="722" class="t">phy_zoom.asp?id={permit}&amp;type=1</text>
+  <text x="626" y="740" class="t">Headless Chromium → parse → screenshot + text</text>
+  <text x="626" y="758" class="t">→ auto_board verification, 1 credit</text>
+  <text x="626" y="780" class="s">Probed 2026-10-21: no CAPTCHA, no scraping clause</text>
+  <text x="626" y="798" class="s">Live smoke test: RUN_LIVE_BOARD=1</text>
+
+  <rect x="898" y="684" width="270" height="146" class="ext"/>
+  <text x="912" y="704" class="h">Other 50 boards + DEA + URAC</text>
+  <text x="912" y="722" class="t">Guided workbench: pre-built URL + copy buttons,</text>
+  <text x="912" y="740" class="t">human reads the page, pastes screenshot,</text>
+  <text x="912" y="758" class="t">→ manual_board verification, 1 credit (~60 s)</text>
+  <text x="912" y="780" class="s">board_lookup table: NV, CA, AZ, TX, OK, KS, MO seeded</text>
+  <text x="912" y="798" class="s">CA blocked by Cloudflare for bots; humans pass</text>
+
+  <rect x="1184" y="684" width="276" height="146" class="ext"/>
+  <text x="1198" y="704" class="h">Not built / not used</text>
+  <text x="1198" y="724" class="no">✗ Kafka, RabbitMQ, SQS, BullMQ/Redis</text>
+  <text x="1198" y="742" class="no">✗ Kubernetes, ECS, Lambda, Vercel functions</text>
+  <text x="1198" y="760" class="no">✗ Stripe / payments · SSO · mobile app</text>
+  <text x="1198" y="778" class="no">✗ Browser extension (paste-screenshot instead)</text>
+  <text x="1198" y="796" class="no">✗ PECOS, CSV import (Phase 2) · LMS</text>
+  <text x="1198" y="818" class="s">Hosting target: Docker Compose on one VPS (~$12/mo)</text>
+
+  <!-- DEPLOY -->
+  <rect x="24" y="870" width="1452" height="170" class="zone"/>
+  <text x="40" y="890" class="zl">DEPLOYMENT (docker-compose.yml) — five containers on one host</text>
+  <rect x="40" y="904" width="200" height="56" class="box"/><text x="52" y="924" class="h">app</text><text x="52" y="944" class="s">Next.js standalone :3000</text>
+  <rect x="256" y="904" width="200" height="56" class="box"/><text x="268" y="924" class="h">cron</text><text x="268" y="944" class="s">same image, crond + tsx jobs</text>
+  <rect x="472" y="904" width="200" height="56" class="data"/><text x="484" y="924" class="h">postgres</text><text x="484" y="944" class="s">postgres:16-alpine, volume</text>
+  <rect x="688" y="904" width="200" height="56" class="data"/><text x="700" y="924" class="h">minio (+ minio-init)</text><text x="700" y="944" class="s">private bucket, versioned</text>
+  <rect x="904" y="904" width="200" height="56" class="data"/><text x="916" y="924" class="h">mailpit</text><text x="916" y="944" class="s">dev SMTP sink :8025</text>
+  <text x="40" y="988" class="t">Prod swaps: minio → Cloudflare R2 or S3 (env only) · mailpit → SES/Resend SMTP (env only) · postgres stays, or a managed Postgres (DATABASE_URL). TLS terminates at a reverse proxy (Caddy/nginx) in front of app:3000 — not in the repo yet.</text>
+  <text x="40" y="1008" class="t">Testing: Vitest unit (status, alerts, matching, pricing, parser) · Vitest integration on the DB (org isolation, ledger, adapter apply) · Playwright e2e walkthrough (11 tests). CI config not yet added.</text>
+  <text x="40" y="1028" class="s">Backups, monitoring, and the reverse proxy are the three operational gaps before a paying customer.</text>
+
+  <!-- edges -->
+  <path d="M324 160 H360" class="edge"/><text x="326" y="152" class="lbl">HTTPS</text>
+  <path d="M1104 220 H1176" class="edge"/><text x="1112" y="212" class="lbl">Prisma</text>
+  <path d="M1104 300 L1176 420" class="edge"/><text x="1112" y="332" class="lbl">S3 API</text>
+  <path d="M1104 320 L1176 560" class="edge"/><text x="1112" y="400" class="lbl">SMTP</text>
+  <path d="M740 466 V484" class="edge"/>
+  <path d="M175 650 V 240 M175 240" class="edge" stroke-dasharray="3 3" marker-end="none"/>
+  <path d="M461 650 V 602" class="edge"/><path d="M747 650 V 602" class="edge"/><path d="M1033 650 V 602" class="edge"/>
+  <text x="470" y="640" class="lbl">cron / actions fetch</text><text x="756" y="640" class="lbl">Chromium</text><text x="1042" y="640" class="lbl">human in browser</text>
+</svg>
