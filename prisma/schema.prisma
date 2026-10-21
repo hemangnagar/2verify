@@ -180,6 +180,8 @@ model CredentialType {
   requiredForRoles    PersonRole[]       @default([]) @map("required_for_roles")
   /// Whether this type is tied to a state (licenses, permits) or not (NPI, DEA, insurance).
   stateSpecific       Boolean            @default(true) @map("state_specific")
+  /// Whether primary-source verification applies. False for training and insurance: they are tracked, not verified against a board.
+  psvRequired         Boolean            @default(true) @map("psv_required")
   createdAt           DateTime           @default(now()) @map("created_at")
   updatedAt           DateTime           @updatedAt @map("updated_at")
 

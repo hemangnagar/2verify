@@ -1,6 +1,6 @@
 # Pharmacy Compliance Tracker — Phase 0 build plan (for approval)
 
-Status: **proposal, awaiting approval before app code is written.**
+Status: **approved Oct 21, 2026. Session one (scaffold, migration, seed) is built; session two builds the pages and jobs.**
 Source: the Oct 20, 2026 build brief. This document covers the three things the
 brief asked for up front: the Prisma schema, the page list, and the seed-data plan.
 
@@ -210,11 +210,26 @@ removes the verifier and leaves whatever admin the env configured.
 
 Items 1–3 are session one. Items 4–6 are session two.
 
-## 5. Open questions (non-blocking; defaults stated)
+## 5. Decisions made during session one
 
-- **PDF rendering.** Default: `@react-pdf/renderer` (no headless browser in the
-  app container). Alternative: Playwright/Chromium, heavier but pixel-matches
-  the web pages.
+- **`credential_type.psv_required`** (added). False for training and insurance: they are tracked
+  for expiry but never verified against a board, so they stay out of the "never verified" tile and
+  the verify queue. "Never verified" also excludes credentials already counted as overdue, so the
+  demo tiles read 2 / 5 / 1 / 1 (the ≤90 tile includes the ≤30 ones).
+- **PDF rendering** uses `pdfkit` for everything server-side (seeded reports, certificates, and the
+  survey pack in session two). No headless browser in the app container.
+- **Seeded alerts** are written directly by the seed from the same `expiryAlertsDueBy()` the
+  nightly job will use, rather than by running the job with a fake clock. Mailpit therefore has no
+  messages after `make demo`; `make nightly` in session two will send live ones.
+- **shadcn/ui** components are vendored under `src/components/ui` (button, card, input, label,
+  badge, table) since the registry was unreachable from the build environment; adding more is a
+  copy of the upstream source.
+- **Exclusion matching**: a record whose DOB differs from the person's is ruled out regardless of
+  name; a name-only match with no DOB is capped at 0.9. So LEIE (which carries DOBs) produces zero
+  matches on the demo roster and SAM produces the one Okafor near-miss at 0.90.
+
+## 6. Open questions (non-blocking; defaults stated)
+
 - **Screenshot capture.** Default for Phase 0: paste (Ctrl+V) or file upload into
   the verify form. The browser extension in the brief is Phase 4.
 - **Fuzzy matching.** Default: Jaro-Winkler on normalized "LAST, FIRST" with a

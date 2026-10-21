@@ -1,0 +1,820 @@
+{
+ "_note": "SYNTHETIC FIXTURE in the shape of SAM.gov Exclusions API v4 (api.sam.gov/entity-information/v4/exclusions). Not real records.",
+ "totalRecords": 20,
+ "excludedEntity": [
+  {
+   "classification": "Individual",
+   "exclusionProgram": "Reciprocal",
+   "exclusionType": "Ineligible (Proceedings Completed)",
+   "excludingAgencyCode": "HHS",
+   "excludingAgencyName": "HEALTH AND HUMAN SERVICES, DEPARTMENT OF",
+   "ctCode": "Z1",
+   "exclusionDetails": {
+    "activationDate": "2025-08-26",
+    "terminationDate": "Indefinite"
+   },
+   "exclusionIdentification": {
+    "samNumber": "S4MDB69V"
+   },
+   "exclusionActions": {
+    "listOfActions": [
+     {
+      "exclusionType": "Ineligible (Proceedings Completed)",
+      "exclusionProgram": "Reciprocal"
+     }
+    ]
+   },
+   "exclusionPrimaryAddress": {
+    "addressLine1": "5639 SYNTHETIC AVE",
+    "city": "DEMOVILLE",
+    "stateOrProvinceCode": "CA",
+    "zipCode": "44551",
+    "countryCode": "USA"
+   },
+   "exclusionOtherInformation": {
+    "additionalComments": "SYNTHETIC FIXTURE RECORD \u2014 demo only"
+   },
+   "exclusionIndividual": {
+    "firstName": "CHARLES",
+    "middleName": "",
+    "lastName": "STANDISH",
+    "npi": null,
+    "dob": null
+   },
+   "exclusionEntityName": null
+  },
+  {
+   "classification": "Individual",
+   "exclusionProgram": "Reciprocal",
+   "exclusionType": "Ineligible (Proceedings Completed)",
+   "excludingAgencyCode": "HHS",
+   "excludingAgencyName": "HEALTH AND HUMAN SERVICES, DEPARTMENT OF",
+   "ctCode": "Z1",
+   "exclusionDetails": {
+    "activationDate": "2025-12-21",
+    "terminationDate": "Indefinite"
+   },
+   "exclusionIdentification": {
+    "samNumber": "S4MDSWJJ"
+   },
+   "exclusionActions": {
+    "listOfActions": [
+     {
+      "exclusionType": "Ineligible (Proceedings Completed)",
+      "exclusionProgram": "Reciprocal"
+     }
+    ]
+   },
+   "exclusionPrimaryAddress": {
+    "addressLine1": "2796 SYNTHETIC AVE",
+    "city": "DEMOVILLE",
+    "stateOrProvinceCode": "MD",
+    "zipCode": "94664",
+    "countryCode": "USA"
+   },
+   "exclusionOtherInformation": {
+    "additionalComments": "SYNTHETIC FIXTURE RECORD \u2014 demo only"
+   },
+   "exclusionIndividual": {
+    "firstName": "JOSHUA",
+    "middleName": "",
+    "lastName": "VANCE",
+    "npi": null,
+    "dob": null
+   },
+   "exclusionEntityName": null
+  },
+  {
+   "classification": "Individual",
+   "exclusionProgram": "Reciprocal",
+   "exclusionType": "Ineligible (Proceedings Completed)",
+   "excludingAgencyCode": "HHS",
+   "excludingAgencyName": "HEALTH AND HUMAN SERVICES, DEPARTMENT OF",
+   "ctCode": "Z1",
+   "exclusionDetails": {
+    "activationDate": "2018-06-03",
+    "terminationDate": "Indefinite"
+   },
+   "exclusionIdentification": {
+    "samNumber": "S4MD65CT"
+   },
+   "exclusionActions": {
+    "listOfActions": [
+     {
+      "exclusionType": "Ineligible (Proceedings Completed)",
+      "exclusionProgram": "Reciprocal"
+     }
+    ]
+   },
+   "exclusionPrimaryAddress": {
+    "addressLine1": "3316 SYNTHETIC AVE",
+    "city": "DEMOVILLE",
+    "stateOrProvinceCode": "MI",
+    "zipCode": "47586",
+    "countryCode": "USA"
+   },
+   "exclusionOtherInformation": {
+    "additionalComments": "SYNTHETIC FIXTURE RECORD \u2014 demo only"
+   },
+   "exclusionIndividual": {
+    "firstName": "NANCY",
+    "middleName": "",
+    "lastName": "EVERHART",
+    "npi": null,
+    "dob": null
+   },
+   "exclusionEntityName": null
+  },
+  {
+   "classification": "Individual",
+   "exclusionProgram": "Reciprocal",
+   "exclusionType": "Ineligible (Proceedings Completed)",
+   "excludingAgencyCode": "HHS",
+   "excludingAgencyName": "HEALTH AND HUMAN SERVICES, DEPARTMENT OF",
+   "ctCode": "Z1",
+   "exclusionDetails": {
+    "activationDate": "2017-02-13",
+    "terminationDate": "Indefinite"
+   },
+   "exclusionIdentification": {
+    "samNumber": "S4MDNX2G"
+   },
+   "exclusionActions": {
+    "listOfActions": [
+     {
+      "exclusionType": "Ineligible (Proceedings Completed)",
+      "exclusionProgram": "Reciprocal"
+     }
+    ]
+   },
+   "exclusionPrimaryAddress": {
+    "addressLine1": "7234 SYNTHETIC AVE",
+    "city": "DEMOVILLE",
+    "stateOrProvinceCode": "TN",
+    "zipCode": "33236",
+    "countryCode": "USA"
+   },
+   "exclusionOtherInformation": {
+    "additionalComments": "SYNTHETIC FIXTURE RECORD \u2014 demo only"
+   },
+   "exclusionIndividual": {
+    "firstName": "SUSAN",
+    "middleName": "",
+    "lastName": "RADCLIFFE",
+    "npi": null,
+    "dob": null
+   },
+   "exclusionEntityName": null
+  },
+  {
+   "classification": "Individual",
+   "exclusionProgram": "Reciprocal",
+   "exclusionType": "Ineligible (Proceedings Completed)",
+   "excludingAgencyCode": "HHS",
+   "excludingAgencyName": "HEALTH AND HUMAN SERVICES, DEPARTMENT OF",
+   "ctCode": "Z1",
+   "exclusionDetails": {
+    "activationDate": "2023-02-02",
+    "terminationDate": "Indefinite"
+   },
+   "exclusionIdentification": {
+    "samNumber": "S4MDRWMU"
+   },
+   "exclusionActions": {
+    "listOfActions": [
+     {
+      "exclusionType": "Ineligible (Proceedings Completed)",
+      "exclusionProgram": "Reciprocal"
+     }
+    ]
+   },
+   "exclusionPrimaryAddress": {
+    "addressLine1": "7939 SYNTHETIC AVE",
+    "city": "DEMOVILLE",
+    "stateOrProvinceCode": "MI",
+    "zipCode": "77266",
+    "countryCode": "USA"
+   },
+   "exclusionOtherInformation": {
+    "additionalComments": "SYNTHETIC FIXTURE RECORD \u2014 demo only"
+   },
+   "exclusionIndividual": {
+    "firstName": "ROBERT",
+    "middleName": "",
+    "lastName": "EVERHART",
+    "npi": null,
+    "dob": null
+   },
+   "exclusionEntityName": null
+  },
+  {
+   "classification": "Individual",
+   "exclusionProgram": "Reciprocal",
+   "exclusionType": "Ineligible (Proceedings Completed)",
+   "excludingAgencyCode": "HHS",
+   "excludingAgencyName": "HEALTH AND HUMAN SERVICES, DEPARTMENT OF",
+   "ctCode": "Z1",
+   "exclusionDetails": {
+    "activationDate": "2015-06-02",
+    "terminationDate": "Indefinite"
+   },
+   "exclusionIdentification": {
+    "samNumber": "S4MDM97Z"
+   },
+   "exclusionActions": {
+    "listOfActions": [
+     {
+      "exclusionType": "Ineligible (Proceedings Completed)",
+      "exclusionProgram": "Reciprocal"
+     }
+    ]
+   },
+   "exclusionPrimaryAddress": {
+    "addressLine1": "7497 SYNTHETIC AVE",
+    "city": "DEMOVILLE",
+    "stateOrProvinceCode": "FL",
+    "zipCode": "50270",
+    "countryCode": "USA"
+   },
+   "exclusionOtherInformation": {
+    "additionalComments": "SYNTHETIC FIXTURE RECORD \u2014 demo only"
+   },
+   "exclusionIndividual": {
+    "firstName": "DONALD",
+    "middleName": "",
+    "lastName": "LOCKHART",
+    "npi": null,
+    "dob": null
+   },
+   "exclusionEntityName": null
+  },
+  {
+   "classification": "Individual",
+   "exclusionProgram": "Reciprocal",
+   "exclusionType": "Ineligible (Proceedings Completed)",
+   "excludingAgencyCode": "HHS",
+   "excludingAgencyName": "HEALTH AND HUMAN SERVICES, DEPARTMENT OF",
+   "ctCode": "Z1",
+   "exclusionDetails": {
+    "activationDate": "2016-01-23",
+    "terminationDate": "Indefinite"
+   },
+   "exclusionIdentification": {
+    "samNumber": "S4MDEAGC"
+   },
+   "exclusionActions": {
+    "listOfActions": [
+     {
+      "exclusionType": "Ineligible (Proceedings Completed)",
+      "exclusionProgram": "Reciprocal"
+     }
+    ]
+   },
+   "exclusionPrimaryAddress": {
+    "addressLine1": "2303 SYNTHETIC AVE",
+    "city": "DEMOVILLE",
+    "stateOrProvinceCode": "MD",
+    "zipCode": "36159",
+    "countryCode": "USA"
+   },
+   "exclusionOtherInformation": {
+    "additionalComments": "SYNTHETIC FIXTURE RECORD \u2014 demo only"
+   },
+   "exclusionIndividual": {
+    "firstName": "PAUL",
+    "middleName": "A",
+    "lastName": "RADCLIFFE",
+    "npi": null,
+    "dob": null
+   },
+   "exclusionEntityName": null
+  },
+  {
+   "classification": "Individual",
+   "exclusionProgram": "Reciprocal",
+   "exclusionType": "Ineligible (Proceedings Completed)",
+   "excludingAgencyCode": "HHS",
+   "excludingAgencyName": "HEALTH AND HUMAN SERVICES, DEPARTMENT OF",
+   "ctCode": "Z1",
+   "exclusionDetails": {
+    "activationDate": "2015-07-12",
+    "terminationDate": "Indefinite"
+   },
+   "exclusionIdentification": {
+    "samNumber": "S4MDT99F"
+   },
+   "exclusionActions": {
+    "listOfActions": [
+     {
+      "exclusionType": "Ineligible (Proceedings Completed)",
+      "exclusionProgram": "Reciprocal"
+     }
+    ]
+   },
+   "exclusionPrimaryAddress": {
+    "addressLine1": "2171 SYNTHETIC AVE",
+    "city": "DEMOVILLE",
+    "stateOrProvinceCode": "PA",
+    "zipCode": "40948",
+    "countryCode": "USA"
+   },
+   "exclusionOtherInformation": {
+    "additionalComments": "SYNTHETIC FIXTURE RECORD \u2014 demo only"
+   },
+   "exclusionIndividual": {
+    "firstName": "WILLIAM",
+    "middleName": "J",
+    "lastName": "BRIGHTWATER",
+    "npi": null,
+    "dob": null
+   },
+   "exclusionEntityName": null
+  },
+  {
+   "classification": "Individual",
+   "exclusionProgram": "Reciprocal",
+   "exclusionType": "Ineligible (Proceedings Completed)",
+   "excludingAgencyCode": "HHS",
+   "excludingAgencyName": "HEALTH AND HUMAN SERVICES, DEPARTMENT OF",
+   "ctCode": "Z1",
+   "exclusionDetails": {
+    "activationDate": "2023-12-16",
+    "terminationDate": "Indefinite"
+   },
+   "exclusionIdentification": {
+    "samNumber": "S4MDMCTY"
+   },
+   "exclusionActions": {
+    "listOfActions": [
+     {
+      "exclusionType": "Ineligible (Proceedings Completed)",
+      "exclusionProgram": "Reciprocal"
+     }
+    ]
+   },
+   "exclusionPrimaryAddress": {
+    "addressLine1": "4170 SYNTHETIC AVE",
+    "city": "DEMOVILLE",
+    "stateOrProvinceCode": "IL",
+    "zipCode": "36412",
+    "countryCode": "USA"
+   },
+   "exclusionOtherInformation": {
+    "additionalComments": "SYNTHETIC FIXTURE RECORD \u2014 demo only"
+   },
+   "exclusionIndividual": {
+    "firstName": "ASHLEY",
+    "middleName": "A",
+    "lastName": "ZELLER",
+    "npi": null,
+    "dob": null
+   },
+   "exclusionEntityName": null
+  },
+  {
+   "classification": "Individual",
+   "exclusionProgram": "Reciprocal",
+   "exclusionType": "Ineligible (Proceedings Completed)",
+   "excludingAgencyCode": "HHS",
+   "excludingAgencyName": "HEALTH AND HUMAN SERVICES, DEPARTMENT OF",
+   "ctCode": "Z1",
+   "exclusionDetails": {
+    "activationDate": "2023-02-09",
+    "terminationDate": "Indefinite"
+   },
+   "exclusionIdentification": {
+    "samNumber": "S4MDVNN6"
+   },
+   "exclusionActions": {
+    "listOfActions": [
+     {
+      "exclusionType": "Ineligible (Proceedings Completed)",
+      "exclusionProgram": "Reciprocal"
+     }
+    ]
+   },
+   "exclusionPrimaryAddress": {
+    "addressLine1": "6625 SYNTHETIC AVE",
+    "city": "DEMOVILLE",
+    "stateOrProvinceCode": "MO",
+    "zipCode": "12082",
+    "countryCode": "USA"
+   },
+   "exclusionOtherInformation": {
+    "additionalComments": "SYNTHETIC FIXTURE RECORD \u2014 demo only"
+   },
+   "exclusionIndividual": {
+    "firstName": "ROBERT",
+    "middleName": "",
+    "lastName": "MARLOWE",
+    "npi": null,
+    "dob": null
+   },
+   "exclusionEntityName": null
+  },
+  {
+   "classification": "Individual",
+   "exclusionProgram": "Reciprocal",
+   "exclusionType": "Ineligible (Proceedings Completed)",
+   "excludingAgencyCode": "HHS",
+   "excludingAgencyName": "HEALTH AND HUMAN SERVICES, DEPARTMENT OF",
+   "ctCode": "Z1",
+   "exclusionDetails": {
+    "activationDate": "2017-11-02",
+    "terminationDate": "Indefinite"
+   },
+   "exclusionIdentification": {
+    "samNumber": "S4MD225H"
+   },
+   "exclusionActions": {
+    "listOfActions": [
+     {
+      "exclusionType": "Ineligible (Proceedings Completed)",
+      "exclusionProgram": "Reciprocal"
+     }
+    ]
+   },
+   "exclusionPrimaryAddress": {
+    "addressLine1": "2515 SYNTHETIC AVE",
+    "city": "DEMOVILLE",
+    "stateOrProvinceCode": "NY",
+    "zipCode": "11341",
+    "countryCode": "USA"
+   },
+   "exclusionOtherInformation": {
+    "additionalComments": "SYNTHETIC FIXTURE RECORD \u2014 demo only"
+   },
+   "exclusionIndividual": {
+    "firstName": "JOHN",
+    "middleName": "",
+    "lastName": "CALLOWAY",
+    "npi": null,
+    "dob": null
+   },
+   "exclusionEntityName": null
+  },
+  {
+   "classification": "Individual",
+   "exclusionProgram": "Reciprocal",
+   "exclusionType": "Ineligible (Proceedings Completed)",
+   "excludingAgencyCode": "HHS",
+   "excludingAgencyName": "HEALTH AND HUMAN SERVICES, DEPARTMENT OF",
+   "ctCode": "Z1",
+   "exclusionDetails": {
+    "activationDate": "2025-04-23",
+    "terminationDate": "Indefinite"
+   },
+   "exclusionIdentification": {
+    "samNumber": "S4MDKJXB"
+   },
+   "exclusionActions": {
+    "listOfActions": [
+     {
+      "exclusionType": "Ineligible (Proceedings Completed)",
+      "exclusionProgram": "Reciprocal"
+     }
+    ]
+   },
+   "exclusionPrimaryAddress": {
+    "addressLine1": "8182 SYNTHETIC AVE",
+    "city": "DEMOVILLE",
+    "stateOrProvinceCode": "WI",
+    "zipCode": "98126",
+    "countryCode": "USA"
+   },
+   "exclusionOtherInformation": {
+    "additionalComments": "SYNTHETIC FIXTURE RECORD \u2014 demo only"
+   },
+   "exclusionIndividual": {
+    "firstName": "DOROTHY",
+    "middleName": "A",
+    "lastName": "KINCAID",
+    "npi": null,
+    "dob": null
+   },
+   "exclusionEntityName": null
+  },
+  {
+   "classification": "Individual",
+   "exclusionProgram": "Reciprocal",
+   "exclusionType": "Ineligible (Proceedings Completed)",
+   "excludingAgencyCode": "HHS",
+   "excludingAgencyName": "HEALTH AND HUMAN SERVICES, DEPARTMENT OF",
+   "ctCode": "Z1",
+   "exclusionDetails": {
+    "activationDate": "2019-07-12",
+    "terminationDate": "Indefinite"
+   },
+   "exclusionIdentification": {
+    "samNumber": "S4MD64EJ"
+   },
+   "exclusionActions": {
+    "listOfActions": [
+     {
+      "exclusionType": "Ineligible (Proceedings Completed)",
+      "exclusionProgram": "Reciprocal"
+     }
+    ]
+   },
+   "exclusionPrimaryAddress": {
+    "addressLine1": "7070 SYNTHETIC AVE",
+    "city": "DEMOVILLE",
+    "stateOrProvinceCode": "NY",
+    "zipCode": "56585",
+    "countryCode": "USA"
+   },
+   "exclusionOtherInformation": {
+    "additionalComments": "SYNTHETIC FIXTURE RECORD \u2014 demo only"
+   },
+   "exclusionIndividual": {
+    "firstName": "MELISSA",
+    "middleName": "",
+    "lastName": "ABERNATHY",
+    "npi": null,
+    "dob": null
+   },
+   "exclusionEntityName": null
+  },
+  {
+   "classification": "Individual",
+   "exclusionProgram": "Reciprocal",
+   "exclusionType": "Ineligible (Proceedings Completed)",
+   "excludingAgencyCode": "HHS",
+   "excludingAgencyName": "HEALTH AND HUMAN SERVICES, DEPARTMENT OF",
+   "ctCode": "Z1",
+   "exclusionDetails": {
+    "activationDate": "2016-04-22",
+    "terminationDate": "Indefinite"
+   },
+   "exclusionIdentification": {
+    "samNumber": "S4MDGHT2"
+   },
+   "exclusionActions": {
+    "listOfActions": [
+     {
+      "exclusionType": "Ineligible (Proceedings Completed)",
+      "exclusionProgram": "Reciprocal"
+     }
+    ]
+   },
+   "exclusionPrimaryAddress": {
+    "addressLine1": "2935 SYNTHETIC AVE",
+    "city": "DEMOVILLE",
+    "stateOrProvinceCode": "WI",
+    "zipCode": "15778",
+    "countryCode": "USA"
+   },
+   "exclusionOtherInformation": {
+    "additionalComments": "SYNTHETIC FIXTURE RECORD \u2014 demo only"
+   },
+   "exclusionIndividual": {
+    "firstName": "GEORGE",
+    "middleName": "A",
+    "lastName": "ELLSWORTH",
+    "npi": null,
+    "dob": null
+   },
+   "exclusionEntityName": null
+  },
+  {
+   "classification": "Individual",
+   "exclusionProgram": "Reciprocal",
+   "exclusionType": "Ineligible (Proceedings Completed)",
+   "excludingAgencyCode": "HHS",
+   "excludingAgencyName": "HEALTH AND HUMAN SERVICES, DEPARTMENT OF",
+   "ctCode": "Z1",
+   "exclusionDetails": {
+    "activationDate": "2023-04-21",
+    "terminationDate": "Indefinite"
+   },
+   "exclusionIdentification": {
+    "samNumber": "S4MDJ8G2"
+   },
+   "exclusionActions": {
+    "listOfActions": [
+     {
+      "exclusionType": "Ineligible (Proceedings Completed)",
+      "exclusionProgram": "Reciprocal"
+     }
+    ]
+   },
+   "exclusionPrimaryAddress": {
+    "addressLine1": "3182 SYNTHETIC AVE",
+    "city": "DEMOVILLE",
+    "stateOrProvinceCode": "MO",
+    "zipCode": "36701",
+    "countryCode": "USA"
+   },
+   "exclusionOtherInformation": {
+    "additionalComments": "SYNTHETIC FIXTURE RECORD \u2014 demo only"
+   },
+   "exclusionIndividual": {
+    "firstName": "SUSAN",
+    "middleName": "A",
+    "lastName": "FAIRBANKS",
+    "npi": null,
+    "dob": null
+   },
+   "exclusionEntityName": null
+  },
+  {
+   "classification": "Individual",
+   "exclusionProgram": "Reciprocal",
+   "exclusionType": "Ineligible (Proceedings Completed)",
+   "excludingAgencyCode": "HHS",
+   "excludingAgencyName": "HEALTH AND HUMAN SERVICES, DEPARTMENT OF",
+   "ctCode": "Z1",
+   "exclusionDetails": {
+    "activationDate": "2016-01-02",
+    "terminationDate": "Indefinite"
+   },
+   "exclusionIdentification": {
+    "samNumber": "S4MDLUMU"
+   },
+   "exclusionActions": {
+    "listOfActions": [
+     {
+      "exclusionType": "Ineligible (Proceedings Completed)",
+      "exclusionProgram": "Reciprocal"
+     }
+    ]
+   },
+   "exclusionPrimaryAddress": {
+    "addressLine1": "5034 SYNTHETIC AVE",
+    "city": "DEMOVILLE",
+    "stateOrProvinceCode": "NJ",
+    "zipCode": "30969",
+    "countryCode": "USA"
+   },
+   "exclusionOtherInformation": {
+    "additionalComments": "SYNTHETIC FIXTURE RECORD \u2014 demo only"
+   },
+   "exclusionIndividual": {
+    "firstName": "DONNA",
+    "middleName": "J",
+    "lastName": "ELLSWORTH",
+    "npi": null,
+    "dob": null
+   },
+   "exclusionEntityName": null
+  },
+  {
+   "classification": "Individual",
+   "exclusionProgram": "Reciprocal",
+   "exclusionType": "Ineligible (Proceedings Completed)",
+   "excludingAgencyCode": "HHS",
+   "excludingAgencyName": "HEALTH AND HUMAN SERVICES, DEPARTMENT OF",
+   "ctCode": "Z1",
+   "exclusionDetails": {
+    "activationDate": "2016-04-11",
+    "terminationDate": "Indefinite"
+   },
+   "exclusionIdentification": {
+    "samNumber": "S4MD88KG"
+   },
+   "exclusionActions": {
+    "listOfActions": [
+     {
+      "exclusionType": "Ineligible (Proceedings Completed)",
+      "exclusionProgram": "Reciprocal"
+     }
+    ]
+   },
+   "exclusionPrimaryAddress": {
+    "addressLine1": "330 SYNTHETIC AVE",
+    "city": "DEMOVILLE",
+    "stateOrProvinceCode": "GA",
+    "zipCode": "82010",
+    "countryCode": "USA"
+   },
+   "exclusionOtherInformation": {
+    "additionalComments": "SYNTHETIC FIXTURE RECORD \u2014 demo only"
+   },
+   "exclusionIndividual": {
+    "firstName": "LINDA",
+    "middleName": "A",
+    "lastName": "DELANCEY",
+    "npi": null,
+    "dob": null
+   },
+   "exclusionEntityName": null
+  },
+  {
+   "classification": "Individual",
+   "exclusionProgram": "Reciprocal",
+   "exclusionType": "Ineligible (Proceedings Completed)",
+   "excludingAgencyCode": "HHS",
+   "excludingAgencyName": "HEALTH AND HUMAN SERVICES, DEPARTMENT OF",
+   "ctCode": "Z1",
+   "exclusionDetails": {
+    "activationDate": "2022-12-25",
+    "terminationDate": "Indefinite"
+   },
+   "exclusionIdentification": {
+    "samNumber": "S4MD3HWN"
+   },
+   "exclusionActions": {
+    "listOfActions": [
+     {
+      "exclusionType": "Ineligible (Proceedings Completed)",
+      "exclusionProgram": "Reciprocal"
+     }
+    ]
+   },
+   "exclusionPrimaryAddress": {
+    "addressLine1": "964 SYNTHETIC AVE",
+    "city": "DEMOVILLE",
+    "stateOrProvinceCode": "NJ",
+    "zipCode": "88440",
+    "countryCode": "USA"
+   },
+   "exclusionOtherInformation": {
+    "additionalComments": "SYNTHETIC FIXTURE RECORD \u2014 demo only"
+   },
+   "exclusionIndividual": {
+    "firstName": "JESSICA",
+    "middleName": "J",
+    "lastName": "DELANCEY",
+    "npi": null,
+    "dob": null
+   },
+   "exclusionEntityName": null
+  },
+  {
+   "classification": "Individual",
+   "exclusionProgram": "Reciprocal",
+   "exclusionType": "Ineligible (Proceedings Completed)",
+   "excludingAgencyCode": "HHS",
+   "excludingAgencyName": "HEALTH AND HUMAN SERVICES, DEPARTMENT OF",
+   "ctCode": "Z1",
+   "exclusionDetails": {
+    "activationDate": "2020-06-05",
+    "terminationDate": "Indefinite"
+   },
+   "exclusionIdentification": {
+    "samNumber": "S4MDHGFH"
+   },
+   "exclusionActions": {
+    "listOfActions": [
+     {
+      "exclusionType": "Ineligible (Proceedings Completed)",
+      "exclusionProgram": "Reciprocal"
+     }
+    ]
+   },
+   "exclusionPrimaryAddress": {
+    "addressLine1": "6829 SYNTHETIC AVE",
+    "city": "DEMOVILLE",
+    "stateOrProvinceCode": "OH",
+    "zipCode": "76811",
+    "countryCode": "USA"
+   },
+   "exclusionOtherInformation": {
+    "additionalComments": "SYNTHETIC FIXTURE RECORD \u2014 demo only"
+   },
+   "exclusionIndividual": {
+    "firstName": "ROBERT",
+    "middleName": "A",
+    "lastName": "OKAFOR",
+    "npi": null,
+    "dob": null
+   },
+   "exclusionEntityName": null
+  },
+  {
+   "classification": "Firm",
+   "exclusionProgram": "Reciprocal",
+   "exclusionType": "Ineligible (Proceedings Completed)",
+   "excludingAgencyCode": "HHS",
+   "excludingAgencyName": "HEALTH AND HUMAN SERVICES, DEPARTMENT OF",
+   "ctCode": "Z1",
+   "exclusionDetails": {
+    "activationDate": "2022-12-05",
+    "terminationDate": "Indefinite"
+   },
+   "exclusionIdentification": {
+    "samNumber": "S4MDWSCG"
+   },
+   "exclusionActions": {
+    "listOfActions": [
+     {
+      "exclusionType": "Ineligible (Proceedings Completed)",
+      "exclusionProgram": "Reciprocal"
+     }
+    ]
+   },
+   "exclusionPrimaryAddress": {
+    "addressLine1": "5353 SYNTHETIC AVE",
+    "city": "DEMOVILLE",
+    "stateOrProvinceCode": "FL",
+    "zipCode": "63662",
+    "countryCode": "USA"
+   },
+   "exclusionOtherInformation": {
+    "additionalComments": "SYNTHETIC FIXTURE RECORD \u2014 demo only"
+   },
+   "exclusionIndividual": null,
+   "exclusionEntityName": "DEMO MEDICAL SUPPLY INC"
+  }
+ ]
+}
