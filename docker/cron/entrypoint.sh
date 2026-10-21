@@ -1,7 +1,6 @@
 #!/bin/sh
-# Runs the job schedule with the container's environment available to each job.
+# Cron container: runs the job schedule with supercronic (container-native cron, env inherited, stdout logs).
 set -e
-printenv | grep -v -E '^(HOME|PATH|PWD|SHLVL|_)=' | sed 's/^\(.*\)$/export \1/' > /app/.job-env
-sed 's#cd /app \&\&#. /app/.job-env \&\& cd /app \&\&#' /app/docker/cron/crontab > /etc/crontabs/root
-echo "[cron] schedule:" && cat /etc/crontabs/root
-exec crond -f -l 2
+echo "[cron] schedule:"
+cat /app/docker/cron/crontab
+exec supercronic -passthrough-logs /app/docker/cron/crontab

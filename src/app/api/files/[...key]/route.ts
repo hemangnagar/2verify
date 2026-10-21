@@ -3,9 +3,10 @@ import { getSession } from "@/lib/auth";
 import { keyOrg, storage, verifyLocalSignature } from "@/lib/storage";
 
 /**
- * File access. For S3 storage: an authenticated user is redirected to a short-lived signed URL.
- * For local storage: the URL itself carries an HMAC signature and expiry (produced by signedUrl()),
- * so it behaves like a presigned URL; without a valid signature the caller must be signed in.
+ * File access. The URL carries an HMAC signature and expiry (produced by storage().signedUrl()), so
+ * it behaves like a presigned link; without a valid signature the caller must be signed in and
+ * inside the file's org. The app streams the object from whichever storage driver is configured,
+ * so the bucket never needs to be reachable from the browser.
  */
 export async function GET(req: NextRequest, ctx: { params: Promise<{ key: string[] }> }) {
   const { key: parts } = await ctx.params;
@@ -22,9 +23,6 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ key: string
     if (session.role !== "operator" && keyOrg(key) !== session.activeOrgId) return new NextResponse("forbidden", { status: 403 });
   }
 
-  if ((process.env.STORAGE_DRIVER ?? "s3") !== "local") {
-    return NextResponse.redirect(await storage().signedUrl(key));
-  }
   try {
     const obj = await storage().get(key);
     return new NextResponse(new Uint8Array(obj.body), {

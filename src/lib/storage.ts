@@ -105,9 +105,23 @@ class S3Storage implements Storage {
     } while (token);
     return n;
   }
+  /**
+   * Links the browser opens go through the app (/api/files, HMAC-signed, expiring) so the bucket
+   * never needs a public hostname; the app streams the object. FILE_LINKS=presigned switches to
+   * S3 presigned URLs for a bucket that is reachable from the browser (e.g. R2 with a custom domain).
+   */
   signedUrl(key: string) {
-    return s3SignedUrl(this.client, new GetObjectCommand({ Bucket: this.bucket, Key: key }), { expiresIn: TTL });
+    if (process.env.FILE_LINKS === "presigned") return s3SignedUrl(this.client, new GetObjectCommand({ Bucket: this.bucket, Key: key }), { expiresIn: TTL });
+    return Promise.resolve(appSignedUrl(key));
   }
+}
+
+/** App-served, HMAC-signed, expiring link for any storage driver. */
+export function appSignedUrl(key: string): string {
+  const exp = Math.floor(Date.now() / 1000) + TTL;
+  const sig = signLocal(key, exp);
+  const base = process.env.APP_URL ?? "";
+  return `${base}/api/files/${key.split("/").map(encodeURIComponent).join("/")}?exp=${exp}&sig=${sig}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -154,10 +168,7 @@ class LocalStorage implements Storage {
     return n;
   }
   async signedUrl(key: string) {
-    const exp = Math.floor(Date.now() / 1000) + TTL;
-    const sig = signLocal(key, exp);
-    const base = process.env.APP_URL ?? "";
-    return `${base}/api/files/${key.split("/").map(encodeURIComponent).join("/")}?exp=${exp}&sig=${sig}`;
+    return appSignedUrl(key);
   }
 }
 

@@ -1,0 +1,11 @@
+# Publish the app through a Cloudflare Tunnel (no open ports on the host).
+#   docker compose -f docker-compose.yml -f docker-compose.tunnel.yml up -d
+# In Cloudflare Zero Trust → Networks → Tunnels: create a tunnel, copy its token into
+# CLOUDFLARE_TUNNEL_TOKEN in .env, and add a public hostname that points to  http://app:3000
+services:
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
+    depends_on:
+      app: { condition: service_healthy }
+    restart: unless-stopped

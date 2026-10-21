@@ -1,6 +1,6 @@
-# min hour dom mon dow  command
-# Nightly: recompute status, build verify queue, send lead/overdue alerts.
-0 2 * * *  cd /app && npx tsx jobs/nightly.ts >> /proc/1/fd/1 2>&1
-# Monthly exclusion screening, both sources, on the 1st at 03:00.
-0 3 1 * *  cd /app && npx tsx jobs/screening.ts --source oig_leie >> /proc/1/fd/1 2>&1
-30 3 1 * * cd /app && npx tsx jobs/screening.ts --source sam >> /proc/1/fd/1 2>&1
+# supercronic crontab (5 fields, UTC). Env is inherited from the container.
+# Nightly: recompute status, run board adapters for due credentials, send lead/overdue alerts.
+0 2 * * *  cd /app && npx tsx jobs/nightly.ts
+# Monthly exclusion screening, both sources, on the 1st.
+0 3 1 * *  cd /app && npx tsx jobs/screening.ts --source oig_leie
+30 3 1 * * cd /app && npx tsx jobs/screening.ts --source sam
