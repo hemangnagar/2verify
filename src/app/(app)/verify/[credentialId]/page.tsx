@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { fillTemplate } from "@/lib/board";
 import { formatDate, isoDate } from "@/lib/dates";
+import { brand } from "@/config/brand";
 import { PageHeader, DescriptionList } from "@/components/page-header";
 import { StatusBadge, ResultBadge } from "@/components/status-badge";
 import { EvidenceThumb } from "@/components/file-link";
@@ -11,6 +12,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { VerifyForm } from "./verify-form";
 import { submitVerification } from "../actions";
+import { adapterFor } from "@/lib/boards";
+import { AutoVerifyButton } from "./auto-verify-button";
 
 export const dynamic = "force-dynamic";
 
@@ -36,6 +39,7 @@ export default async function VerifyPage({ params }: { params: Promise<{ credent
     ? { name: lookup.boardName, url: fillTemplate(lookup.urlTemplate, { number: c.number, lastName: c.person?.lastName, firstName: c.person?.firstName }), notes: lookup.notes ?? "" }
     : fallback ?? { name: "Issuing source", url: "https://example.com/", notes: `No board lookup is configured for ${c.state ?? "this"} ${c.credentialType.name}. Add one under Settings → Board lookups.` };
   const prev = c.verifications[0] ?? null;
+  const auto = c.number ? await adapterFor(c) : null;
 
   return (
     <div className="grid gap-6">
@@ -47,6 +51,20 @@ export default async function VerifyPage({ params }: { params: Promise<{ credent
           </Link>
         }
       />
+      {auto && (
+        <Card className="border-emerald-300 bg-emerald-50/50">
+          <CardHeader>
+            <CardTitle>Automated check available — {auto.adapter.board}</CardTitle>
+            <CardDescription>
+              {brand.name} queries the board directly, captures the page, and writes the same locked evidence record and credit debit as a manual check. If the board is unreachable, the guided form below still works.
+              {c.lastAutoError && <span className="block text-destructive">Last automated attempt failed: {c.lastAutoError}</span>}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <AutoVerifyButton credentialId={c.id} />
+          </CardContent>
+        </Card>
+      )}
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="grid gap-6">
           <Card>

@@ -162,6 +162,31 @@ test("org isolation: Harbor cannot see a Sierra credential", async ({ page }) =>
   expect([401, 403, 404, 500].includes(ops.status()) || ops.url().includes("/login")).toBe(true);
 });
 
+test("automated board adapter: queue badge, verify page offer, and graceful fallback", async ({ page }) => {
+  await login(page, { email: "admin@prairie.example.com", password: ORG_ADMIN_PASSWORD }, /\/$/);
+  await page.goto("/verify");
+  const row = page.getByRole("row", { name: /CVS Pharmacy #11306/ });
+  await expect(row).toContainText("Automated");
+  await row.getByRole("link", { name: "Verify" }).click();
+  await expect(page.getByText(/Automated check available — Texas State Board of Pharmacy/)).toBeVisible();
+  await page.getByRole("button", { name: "Verify automatically" }).click();
+  // In an environment that can reach the board this records the verification and lands on the
+  // record page; where it cannot, the failure is shown and the guided form stays usable.
+  await Promise.race([
+    page.waitForURL(/\/credentials\/[^/]+\?verified=auto$/, { timeout: 60_000 }),
+    expect(page.getByText(/Automated check failed:/)).toBeVisible({ timeout: 60_000 }),
+  ]);
+  if (/verified=auto/.test(page.url())) {
+    await expect(page.locator("[data-slot=card]", { hasText: "Verification history" })).toContainText("board (automated)");
+  } else {
+    await expect(page.getByRole("button", { name: "Save verification" })).toBeVisible();
+    await page.goto("/verify");
+    await expect(page.getByRole("row", { name: /CVS Pharmacy #11306/ })).toContainText("Automated check failed");
+  }
+  await page.goto("/settings/board-adapters");
+  await expect(page.getByRole("row", { name: /TX/ })).toContainText("Texas State Board of Pharmacy");
+});
+
 test("exports respond", async ({ page }) => {
   await login(page, SIERRA_ADMIN, /\/$/);
   await page.goto("/entities");

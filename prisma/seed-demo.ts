@@ -557,6 +557,9 @@ const PRAIRIE: OrgSpec = {
   entities: [
     { key: "tulsa", name: "Prairie Infusion Partners", state: "OK", address: "8800 E 61st St, Tulsa, OK 74133", primary: true },
     { key: "dallas", name: "Prairie Infusion Partners – Dallas", state: "TX", address: "3400 Oak Lawn Ave, Dallas, TX 75219" },
+    // Real, public Texas pharmacy permit (a chain location) so the automated adapter can be shown live.
+    // Pharmacy permits are public records; no individual's license is used anywhere in the seed.
+    { key: "cvs", name: "CVS Pharmacy #11306 (public permit, adapter demo)", state: "TX", address: "7101 E William Cannon Dr, Austin, TX 78744" },
   ],
   people: [
     { key: "tom", first: "Tom", last: "Lindgren", role: "pharmacist", loc: "tulsa", dob: "1975-06-30", hired: 3000, npi: true },
@@ -581,6 +584,9 @@ const PRAIRIE: OrgSpec = {
     await b.cred({ subject: { entity: "tulsa" }, type: "NPI", number: tulsa.npi, expiresIn: null, verifications: [V(b.between(2, 40), { method: "auto_api" })] });
     await b.cred({ subject: { entity: "tulsa" }, type: "Professional Liability Insurance", number: "DMI-PL-7710442", expiresIn: 310, issuedDaysAgo: 55 });
     await b.cred({ subject: { entity: "dallas" }, type: "Pharmacy Permit", state: "TX", number: b.lic("TX", "pharmacy"), verifications: b.recent("TX") });
+    // STORY: the one real record. Expiry is left one year short of what the board shows, so the
+    // automated check visibly corrects it and sends a status_change alert.
+    await b.cred({ subject: { entity: "cvs" }, type: "Pharmacy Permit", state: "TX", number: "33978", expiresIn: 250, issuedDaysAgo: 1856, neverVerifiedSince: D(-30), document: false, notes: "Public Texas permit used to demonstrate the automated board adapter. Click Verify automatically." });
     await b.cred({ subject: { entity: "dallas" }, type: "DEA Registration", number: dallas.deaNumber });
     await b.cred({ subject: { entity: "dallas" }, type: "NPI", number: dallas.npi, expiresIn: null, verifications: [V(b.between(2, 40), { method: "auto_api" })] });
     await b.cred({ subject: { person: "tom" }, type: "Pharmacist License", state: "OK", number: b.lic("OK", "pharmacist"), verifications: b.recent("OK") });

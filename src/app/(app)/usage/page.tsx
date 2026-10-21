@@ -8,8 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { cn } from "@/lib/utils";
 import { brand } from "@/config/brand";
 
-/** States with a headless-browser board adapter. Prompt B replaces this with the board_adapter table. */
-const AUTOMATED_STATES = new Set<string>([]);
+
 
 export const dynamic = "force-dynamic";
 
@@ -32,6 +31,7 @@ export default async function UsagePage() {
     if (st) perState.set(st, (perState.get(st) ?? 0) + b._count._all);
     else federal += b._count._all;
   }
+  const AUTOMATED_STATES = new Set((await db.boardAdapter.findMany({ where: { enabled: true }, select: { state: true } })).map((a) => a.state));
   const addedIn = (month: string) => jurisdictions.filter((j) => j.addedOn.toISOString().slice(0, 7) === month).map((j) => j.state);
 
   return (

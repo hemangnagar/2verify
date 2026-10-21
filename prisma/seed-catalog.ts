@@ -6,7 +6,7 @@
 import "dotenv/config";
 import bcrypt from "bcryptjs";
 import { db } from "../src/lib/db";
-import { BOARD_LOOKUPS, CREDENTIAL_TYPES, PLANS } from "./seed-lib/catalog";
+import { BOARD_ADAPTERS, BOARD_LOOKUPS, CREDENTIAL_TYPES, PLANS } from "./seed-lib/catalog";
 import { asSystem } from "../src/lib/db";
 
 async function main() {
@@ -28,6 +28,15 @@ async function main() {
     });
   }
 
+  for (const a of BOARD_ADAPTERS) {
+    const credentialTypeId = types.get(a.typeName)!;
+    await db.boardAdapter.upsert({
+      where: { state_credentialTypeId: { state: a.state, credentialTypeId } },
+      create: { state: a.state, credentialTypeId, adapter: a.adapter, notes: a.notes },
+      update: { adapter: a.adapter, notes: a.notes },
+    });
+  }
+
   for (const p of PLANS) {
     await db.plan.upsert({ where: { name: p.name }, create: p, update: { annualPriceCents: p.annualPriceCents, creditsPerYear: p.creditsPerYear, overageCents: p.overageCents, sortOrder: p.sortOrder } });
   }
@@ -46,7 +55,7 @@ async function main() {
     console.log("SEED_OPERATOR_EMAIL / SEED_OPERATOR_PASSWORD not set; no operator user created");
   }
 
-  console.log(`credential types: ${types.size}, board lookups: ${BOARD_LOOKUPS.length}`);
+  console.log(`credential types: ${types.size}, board lookups: ${BOARD_LOOKUPS.length}, board adapters: ${BOARD_ADAPTERS.length}`);
 }
 
 asSystem(main)

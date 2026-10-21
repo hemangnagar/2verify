@@ -241,3 +241,16 @@ Steps 1–2 are session one; step 3 is session two. Prompt B starts after that.
 - Board lookups were seeded for TX, OK, KS and MO (Prairie's states); the OK/KS/MO URLs are best
   guesses to confirm in Phase 2.
 - The demo `.env` sets `MAIL_DRIVER=log`, `NPPES_MODE=fixture`, `SCREENING_MODE=fixture`.
+
+## 12. Prompt B (Texas adapter) notes
+
+- Board chosen: Texas State Board of Pharmacy, pharmacy permits. Record in `docs/boards/TX.md`;
+  probe outputs in `prisma/fixtures/boards/`. California is blocked by a Cloudflare human check and
+  is not bypassed; Nevada's portal works but has no per-record URL and unresolved terms.
+- New `board_adapter` table and `credential.last_auto_attempt_at` / `last_auto_error` columns.
+- The adapter interface is `verify({ licenseNumber, lastName?, licenseType })`; the orchestrator is
+  shared by the "Verify automatically" button and the nightly job, and `applyBoardResult()` is
+  tested with a fake board result through to the ledger and alert.
+- The live lookup cannot run from the build container (no egress to the board). The e2e test
+  accepts either outcome: a recorded verification where the board is reachable, or the visible
+  failure plus the guided fallback where it is not.

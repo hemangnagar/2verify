@@ -25,6 +25,14 @@ export default async function SettingsPage() {
             </CardHeader>
           </Card>
         </Link>
+        <Link href="/settings/board-adapters">
+          <Card className="h-full hover:bg-muted/40">
+            <CardHeader>
+              <CardTitle>Automated boards</CardTitle>
+              <CardDescription>Which state boards are queried automatically, their health, and what stays on the guided workbench.</CardDescription>
+            </CardHeader>
+          </Card>
+        </Link>
         <Card>
           <CardHeader>
             <CardTitle>Alert recipients</CardTitle>

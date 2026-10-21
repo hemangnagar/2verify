@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { loadCredentials } from "@/lib/credentials";
+import { enabledAdapterMap } from "@/lib/boards";
 import { formatDate, daysBetween } from "@/lib/dates";
 import { PageHeader, Empty } from "@/components/page-header";
 import { StatusBadge } from "@/components/status-badge";
@@ -13,7 +14,7 @@ export const dynamic = "force-dynamic";
 /** Verification queue: PSV-required credentials never verified or due within 30 days, grouped by state. */
 export default async function VerifyQueuePage() {
   const today = new Date();
-  const all = await loadCredentials({}, today);
+  const [all, adapters] = await Promise.all([loadCredentials({}, today), enabledAdapterMap()]);
   const due = all
     .filter((c) => c.credentialType.psvRequired && (c.buckets.neverVerified || c.buckets.verifyDue || c.buckets.overdue))
     .sort((a, b) => (a.nextVerifyDue?.getTime() ?? 0) - (b.nextVerifyDue?.getTime() ?? 0));
@@ -24,7 +25,10 @@ export default async function VerifyQueuePage() {
   }
   return (
     <div className="grid gap-6">
-      <PageHeader title="Verification queue" description={`${due.length} credential${due.length === 1 ? "" : "s"} due for primary-source verification within 30 days`} />
+      <PageHeader
+        title="Verification queue"
+        description={`${due.length} credential${due.length === 1 ? "" : "s"} due for primary-source verification within 30 days. "Automated" means an adapter checks the board for you; everything else is a one-minute guided lookup.`}
+      />
       {due.length === 0 && <Empty>Nothing is due. The nightly job rebuilds this queue.</Empty>}
       {[...groups.entries()].map(([state, rows]) => (
         <Card key={state}>
@@ -49,7 +53,15 @@ export default async function VerifyQueuePage() {
                   return (
                     <TableRow key={c.id}>
                       <TableCell className="font-medium">{c.holder}</TableCell>
-                      <TableCell>{c.credentialType.name}</TableCell>
+                      <TableCell>
+                        {c.credentialType.name}
+                        {c.state && adapters.has(`${c.state}:${c.credentialTypeId}`) && (
+                          <Badge variant="success" className="ml-2">
+                            Automated
+                          </Badge>
+                        )}
+                        {c.lastAutoError && <div className="max-w-xs whitespace-normal text-xs text-destructive">Automated check failed: {c.lastAutoError}. Verify manually.</div>}
+                      </TableCell>
                       <TableCell className="font-mono text-xs">{c.number ?? "—"}</TableCell>
                       <TableCell>
                         <StatusBadge status={c.status} />

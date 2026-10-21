@@ -158,11 +158,29 @@ page prices the shortfall at the plan's overage rate.
    Sierra Specialty Pharmacy; the amber banner shows you are inside a customer.
 1. **Dashboard.** Tiles read 2 expiring ≤30 days, 5 ≤90, 1 overdue, 1 never verified. Click a tile to switch the list; filter by location, person, type.
 2. **A credential record.** Open Marcus Delgado's NV technician license: expired 12 days ago, certificate attached, alert history shows the 90/60/30/7-day and overdue emails, verification history is empty.
-3. **Verify it.** Click "Verify now". The NV board link opens pre-built, the license number and name are one click to copy, record what the board shows, paste a screenshot, save. The evidence record appears, locked, and the credential's next verification date moves out a year. If the board showed a different expiry or status, the record is updated and the compliance lead gets a status_change email.
+3. **Verify, automated.** Switch into Prairie Infusion Partners, open the queue: the CVS Pharmacy #11306 permit (a real public Texas record) carries an "Automated" badge. Verify automatically: the board is queried, the page captured, the expiry corrected, one credit debited, the record locked. Say: "That is one state. The other fifty are the same screen, done by a verifier until each one is worth automating."
+3b. **Verify, guided.** Back in Sierra, click "Verify now" on Marcus Delgado's overdue NV license. The NV board link opens pre-built, the license number and name are one click to copy, record what the board shows, paste a screenshot, save. The evidence record appears, locked, and the credential's next verification date moves out a year. If the board showed a different expiry or status, the record is updated and the compliance lead gets a status_change email.
 4. **Exclusion screening.** Screening → last month's runs: 17 screened, 0 LEIE matches, 1 SAM match. Open Match review, compare Dr. Okafor against the Ohio record, dismiss as a false positive with a note. The decision is logged with reviewer and time. "Run now" repeats the screening live (or against the fixture in demo mode).
 5. **Usage and pricing.** Usage: 3 jurisdictions × $400, Advanced at $10,200, 2,400 credits, 588 used, 1,811 remaining after the verification you just did, projected overage at the current run rate. Switch to Harbor Compounding to see a Core customer heading into overage.
 6. **Survey pack.** Reports → PDF for Sierra Specialty Pharmacy: every active credential with last verification, method, result, and the evidence thumbnail. The ZIP holds the full-size files with a manifest.
 7. **Audit.** Every change above is in the audit log, filterable by table, user, and row.
+
+## Automated boards
+
+One state board is automated end to end: **Texas pharmacy permits**. The adapter opens the board's
+detail page in headless Chromium, reads status, expiration and disciplinary orders, saves a screenshot
+and the page text as evidence, and writes the same locked verification record and credit debit as the
+guided workbench. The queue shows an "Automated" badge on such credentials and the verify page offers
+"Verify automatically"; the nightly job runs the adapter for everything due. If the board is slow,
+changed, or unreachable, the error is shown on the credential and the guided form takes over.
+
+Every other state and license type stays on the guided workbench by design. Adding a board is
+2Verify engineering work per state: probe it (`docs/boards/PROBE-BRIEF.md`), confirm its terms, write
+and test a parser, seed a `board_adapter` row. California's search sits behind a Cloudflare human check
+and is not automated; its data is available as DCA bulk files for a later integration.
+
+Runtime: `playwright-core` plus a Chromium (`PW_CHROMIUM_PATH`, or the Docker image's bundled one).
+`BOARD_ADAPTERS=off` turns automation off; `RUN_LIVE_BOARD=1 make test` runs the live Texas smoke test.
 
 ## Jobs and the monthly runbook
 

@@ -2,8 +2,9 @@ import type { AlertKind } from "@prisma/client";
 import { asOrg, asSystem, db } from "./db";
 import { recomputeCredential } from "./credentials";
 import { expiryAlertsDueBy } from "./status";
-import { dateOnly, daysBetween, isoDate } from "./dates";
+import { addDays, dateOnly, daysBetween, isoDate } from "./dates";
 import { appUrl, credentialLabel, sendAlert } from "./alerts";
+import { adaptersEnabled, enabledAdapterMap, runAutomatedVerification } from "./boards";
 
 export interface NightlyResult {
   credentials: number;
@@ -11,6 +12,8 @@ export interface NightlyResult {
   alertsSent: number;
   verifyDueAlerts: number;
   skippedAlreadySent: number;
+  autoVerified: number;
+  autoFailed: number;
 }
 
 /**
@@ -24,7 +27,7 @@ export interface NightlyResult {
  */
 export async function runNightly(today: Date = new Date()): Promise<NightlyResult & { orgs: number }> {
   const orgs = await asSystem(() => db.org.findMany({ where: { status: { not: "suspended" } }, select: { id: true, name: true } }));
-  const total: NightlyResult & { orgs: number } = { orgs: orgs.length, credentials: 0, statusChanges: 0, alertsSent: 0, verifyDueAlerts: 0, skippedAlreadySent: 0 };
+  const total: NightlyResult & { orgs: number } = { orgs: orgs.length, credentials: 0, statusChanges: 0, alertsSent: 0, verifyDueAlerts: 0, skippedAlreadySent: 0, autoVerified: 0, autoFailed: 0 };
   for (const org of orgs) {
     const r = await asOrg(org.id, () => runNightlyForOrg(today));
     total.credentials += r.credentials;
@@ -32,6 +35,8 @@ export async function runNightly(today: Date = new Date()): Promise<NightlyResul
     total.alertsSent += r.alertsSent;
     total.verifyDueAlerts += r.verifyDueAlerts;
     total.skippedAlreadySent += r.skippedAlreadySent;
+    total.autoVerified += r.autoVerified;
+    total.autoFailed += r.autoFailed;
   }
   return total;
 }
@@ -39,7 +44,22 @@ export async function runNightly(today: Date = new Date()): Promise<NightlyResul
 /** One org, already in scope. */
 export async function runNightlyForOrg(today: Date = new Date()): Promise<NightlyResult> {
   const t = dateOnly(today);
-  const result: NightlyResult = { credentials: 0, statusChanges: 0, alertsSent: 0, verifyDueAlerts: 0, skippedAlreadySent: 0 };
+  const result: NightlyResult = { credentials: 0, statusChanges: 0, alertsSent: 0, verifyDueAlerts: 0, skippedAlreadySent: 0, autoVerified: 0, autoFailed: 0 };
+
+  // 0. Automated board checks for everything due that has an enabled adapter (rate-limited per board).
+  if (adaptersEnabled()) {
+    const map = await enabledAdapterMap();
+    if (map.size) {
+      const due = await db.credential.findMany({ where: { credentialType: { psvRequired: true }, OR: [{ nextVerifyDue: { lte: addDays(t, 30) } }, { verifications: { none: {} } }] }, select: { id: true, state: true, credentialTypeId: true, number: true } });
+      for (const c of due) {
+        if (!c.state || !c.number || !map.has(`${c.state}:${c.credentialTypeId}`)) continue;
+        const r = await runAutomatedVerification(c.id, null);
+        if (r.ok) result.autoVerified++;
+        else result.autoFailed++;
+      }
+    }
+  }
+
   const ids = await db.credential.findMany({ select: { id: true } });
 
   for (const { id } of ids) {

@@ -303,10 +303,34 @@ model CredentialType {
   createdAt           DateTime           @default(now()) @map("created_at")
   updatedAt           DateTime           @updatedAt @map("updated_at")
 
-  credentials  Credential[]
-  boardLookups BoardLookup[]
+  credentials   Credential[]
+  boardLookups  BoardLookup[]
+  boardAdapters BoardAdapter[]
 
   @@map("credential_type")
+}
+
+/// A headless-browser verifier for one (state, credential type). Added per state by the 2Verify team.
+model BoardAdapter {
+  id               String    @id @default(cuid())
+  state            String    @db.Char(2)
+  credentialTypeId String    @map("credential_type_id")
+  /// Key into the adapter registry (src/lib/boards), e.g. "tx-pharmacy-permit".
+  adapter          String
+  enabled          Boolean   @default(true)
+  /// Minimum seconds between queries to this board.
+  minIntervalSec   Int       @default(5) @map("min_interval_sec")
+  lastSuccessAt    DateTime? @map("last_success_at")
+  lastError        String?   @map("last_error")
+  lastErrorAt      DateTime? @map("last_error_at")
+  notes            String?
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  credentialType CredentialType @relation(fields: [credentialTypeId], references: [id], onDelete: Cascade)
+
+  @@unique([state, credentialTypeId])
+  @@map("board_adapter")
 }
 
 /// One row per (state, credential type): where a human verifies it and what the page shows.
@@ -345,6 +369,9 @@ model Credential {
   status           CredentialStatus @default(unknown)
   documentFileKey  String?          @map("document_file_key")
   notes            String?
+  /// Last automated board attempt; the error is shown in the queue so a human can take over.
+  lastAutoAttemptAt DateTime?       @map("last_auto_attempt_at")
+  lastAutoError    String?          @map("last_auto_error")
   isDemo           Boolean          @default(false) @map("is_demo")
   createdAt        DateTime         @default(now()) @map("created_at")
   updatedAt        DateTime         @updatedAt @map("updated_at")

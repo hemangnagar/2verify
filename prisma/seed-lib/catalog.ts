@@ -9,6 +9,11 @@ export const PLANS = [
   { id: "plan_enterprise", name: "Enterprise", annualPriceCents: 1395000, creditsPerYear: 3600, overageCents: 388, sortOrder: 5 },
 ];
 
+/** Automated board adapters: which (state, credential type) runs which adapter key from src/lib/boards. */
+export const BOARD_ADAPTERS: Array<{ state: string; typeName: string; adapter: string; notes: string }> = [
+  { state: "TX", typeName: "Pharmacy Permit", adapter: "tx-pharmacy-permit", notes: "Texas State Board of Pharmacy permit detail page (phy_zoom.asp). Probe 2026-10-21: no CAPTCHA, no automation prohibition in the verification terms. 1 query / 5 s." },
+];
+
 /** Credential type catalog. Names are stable identifiers used by the demo seed and the CSV importer. */
 export const CREDENTIAL_TYPES: Array<{
   name: string;

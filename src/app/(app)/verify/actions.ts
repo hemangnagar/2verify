@@ -6,11 +6,26 @@ import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { currentOrgId, db } from "@/lib/db";
 import { recordVerification } from "@/lib/verifications";
+import { runAutomatedVerification } from "@/lib/boards";
 import { parseForm, withUser, zDate, zOptStr, type ActionState } from "@/lib/action";
 import { fileKey, storage } from "@/lib/storage";
 import { recomputeCredential } from "@/lib/credentials";
 import { appUrl, credentialLabel, sendAlert } from "@/lib/alerts";
 import { isoDate } from "@/lib/dates";
+
+export async function autoVerifyAction(credentialId: string): Promise<ActionState> {
+  let outcome: Awaited<ReturnType<typeof runAutomatedVerification>>;
+  try {
+    outcome = await withUser((s) => runAutomatedVerification(credentialId, s.userId));
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
+  revalidatePath("/");
+  revalidatePath("/verify");
+  revalidatePath(`/credentials/${credentialId}`);
+  if (!outcome.ok) return { error: outcome.error };
+  redirect(`/credentials/${credentialId}?verified=auto`);
+}
 
 const schema = z.object({
   sourceUrl: z.string().url(),

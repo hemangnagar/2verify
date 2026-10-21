@@ -140,7 +140,7 @@ export default async function CredentialPage({ params }: { params: Promise<{ id:
                   <TableRow key={v.id}>
                     <TableCell>{v.verifiedAt.toISOString().replace("T", " ").slice(0, 16)}</TableCell>
                     <TableCell>{v.verifiedBy?.name ?? "system"}</TableCell>
-                    <TableCell>{v.method === "auto_api" ? "API" : "board (manual)"}</TableCell>
+                    <TableCell>{v.method === "auto_api" ? "API" : v.method === "auto_board" ? <Badge variant="success">board (automated)</Badge> : "board (manual)"}</TableCell>
                     <TableCell>
                       <ResultBadge result={v.result} />
                     </TableCell>
