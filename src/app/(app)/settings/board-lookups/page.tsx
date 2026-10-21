@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { requireAdmin } from "@/lib/auth";
+import { requireOrgAdmin } from "@/lib/auth";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +12,7 @@ import { US_STATES } from "@/lib/credentials";
 export const dynamic = "force-dynamic";
 
 export default async function BoardLookupsPage() {
-  await requireAdmin();
+  await requireOrgAdmin();
   const [lookups, types] = await Promise.all([
     db.boardLookup.findMany({ include: { credentialType: true }, orderBy: [{ state: "asc" }, { credentialType: { name: "asc" } }] }),
     db.credentialType.findMany({ where: { psvRequired: true, stateSpecific: true }, orderBy: { name: "asc" } }),

@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { requireAdmin } from "@/lib/auth";
+import { requireOrgAdmin } from "@/lib/auth";
 import { changedFields } from "@/lib/audit-format";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
 const TABLES = ["Entity", "Person", "Credential", "CredentialType", "BoardLookup", "Verification", "ScreeningRun", "ScreeningMatch", "Alert", "User"];
 
 export default async function AuditPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
-  await requireAdmin();
+  await requireOrgAdmin();
   const sp = await searchParams;
   const page = Math.max(1, Number(sp.page ?? 1));
   const take = 100;

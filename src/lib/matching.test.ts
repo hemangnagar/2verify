@@ -32,8 +32,11 @@ describe("matchRoster", () => {
     expect(m[0]).toMatchObject({ matchedOn: "fuzzy_name" });
     expect(m[0].score).toBeCloseTo(0.9, 5);
   });
-  it("does not flag unrelated people", () => {
+  it("does not flag unrelated people, or a shared surname with a different first name", () => {
     expect(matchRoster([rahman], [{ lastName: "RADCLIFFE", firstName: "ASHLEY" }, { lastName: "RAHMAN", firstName: "AISHAH", dob: "19800101" }])).toHaveLength(0);
+    const cole = { id: "p3", firstName: "Cole", lastName: "Abernathy", dob: new Date("1983-09-05T00:00:00Z"), npi: null };
+    expect(matchRoster([cole], [{ lastName: "ABERNATHY", firstName: "MELISSA" }])).toHaveLength(0);
+    expect(matchRoster([cole], [{ lastName: "ABERNATHY", firstName: "COLE" }])).toHaveLength(1);
   });
   it("keeps only the best candidate per person", () => {
     const m = matchRoster([okafor], [

@@ -4,7 +4,8 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
-import { db } from "@/lib/db";
+import { currentOrgId, db } from "@/lib/db";
+import { recordVerification } from "@/lib/verifications";
 import { parseForm, withUser, zDate, zOptStr, type ActionState } from "@/lib/action";
 import { fileKey, storage } from "@/lib/storage";
 import { recomputeCredential } from "@/lib/credentials";
@@ -36,32 +37,33 @@ export async function submitVerification(credentialId: string, _prev: ActionStat
   try {
     await withUser(async (session) => {
       const c = await db.credential.findUniqueOrThrow({ where: { id: credentialId }, include: { credentialType: true, person: true, entity: true } });
+      const orgId = currentOrgId();
       const ownerEntityId = c.person?.entityId ?? c.entityId ?? (await db.entity.findFirstOrThrow({ where: { isPrimary: true } })).id;
       const at = new Date();
       const vid = randomUUID();
       const ext = d.evidence.name.includes(".") ? d.evidence.name.slice(d.evidence.name.lastIndexOf(".")) : d.evidence.type === "image/png" ? ".png" : ".bin";
-      const evidenceFileKey = fileKey(ownerEntityId, "verification", vid, `board-evidence${ext}`, at);
+      const evidenceFileKey = fileKey(orgId, ownerEntityId, "verification", vid, `board-evidence${ext}`, at);
       await storage().put(evidenceFileKey, Buffer.from(await d.evidence.arrayBuffer()), {
         contentType: d.evidence.type || "application/octet-stream",
         metadata: { verifier: session.email, verified_at: at.toISOString(), source_url: d.sourceUrl, credential_id: credentialId, result: d.result },
       });
 
-      await db.verification.create({
-        data: {
-          id: vid,
-          credentialId,
-          verifiedById: session.userId,
-          verifiedAt: at,
-          method: "manual_board",
-          sourceUrl: d.sourceUrl,
-          result: d.result,
-          expirationSeen: d.expirationSeen,
-          disciplineFlag: d.disciplineFlag,
-          note: d.note,
-          evidenceFileKey,
-          statusBefore: c.status,
-          expiresBefore: c.expiresOn,
-        },
+      // Verification row + one-credit debit in one transaction.
+      await recordVerification({
+        id: vid,
+        orgId,
+        credentialId,
+        verifiedById: session.userId,
+        verifiedAt: at,
+        method: "manual_board",
+        sourceUrl: d.sourceUrl,
+        result: d.result,
+        expirationSeen: d.expirationSeen,
+        disciplineFlag: d.disciplineFlag,
+        note: d.note,
+        evidenceFileKey,
+        statusBefore: c.status,
+        expiresBefore: c.expiresOn,
       });
 
       // Apply what the board showed.

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
-import { getSession } from "@/lib/auth";
+import { getSession, isOrgAdmin } from "@/lib/auth";
 import { formatDate } from "@/lib/dates";
 import { PageHeader, DescriptionList, Empty } from "@/components/page-header";
 import { StatusBadge } from "@/components/status-badge";
@@ -41,7 +41,7 @@ export default async function EntityPage({ params }: { params: Promise<{ id: str
             <Button asChild variant="outline">
               <a href={`/api/reports/survey-pack?entity=${e.id}&format=pdf`}>Survey pack PDF</a>
             </Button>
-            {session?.role === "admin" && (
+            {(session ? isOrgAdmin(session) : false) && (
               <Button asChild variant="outline">
                 <Link href={`/entities/${e.id}/edit`}>Edit</Link>
               </Button>

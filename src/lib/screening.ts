@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import type { ScreeningSource } from "@prisma/client";
-import { db } from "./db";
+import { currentOrgId, db } from "./db";
 import { fileKey, storage } from "./storage";
 import { leieRowToRecord, matchRoster, parseCsv, type ExclusionRecord, type RosterPerson } from "./matching";
 import { screeningReportPdf } from "./evidence";
@@ -24,6 +24,7 @@ const SAM_URL = "https://api.sam.gov/entity-information/v4/exclusions";
 export async function runScreening(source: ScreeningSource, opts: { mode?: ScreeningMode; now?: Date } = {}) {
   const mode: ScreeningMode = opts.mode ?? ((process.env.SCREENING_MODE as ScreeningMode) || "live");
   const runAt = opts.now ?? new Date();
+  const orgId = currentOrgId();
   const people = await db.person.findMany({ where: { active: true }, orderBy: [{ lastName: "asc" }, { firstName: "asc" }] });
   const roster: RosterPerson[] = people.map((p) => ({ id: p.id, firstName: p.firstName, lastName: p.lastName, dob: p.dob, npi: p.npi }));
   const rosterJson = people.map((p) => ({ id: p.id, name: `${p.firstName} ${p.lastName}`, role: p.role, npi: p.npi }));
@@ -49,17 +50,17 @@ export async function runScreening(source: ScreeningSource, opts: { mode?: Scree
     })),
   });
   const ownerId = primary?.id ?? "shared";
-  const reportFileKey = fileKey(ownerId, "screening_run", runId, `${source}-report.pdf`, runAt);
+  const reportFileKey = fileKey(orgId, ownerId, "screening_run", runId, `${source}-report.pdf`, runAt);
   await storage().put(reportFileKey, pdf, { contentType: "application/pdf", metadata: { source, run_at: runAt.toISOString(), source_version: sourceVersion, mode } });
 
   const run = await db.screeningRun.create({
-    data: { id: runId, runAt, source, sourceVersion, personsScreened: roster.length, matchesFound: matches.length, reportFileKey, roster: rosterJson, isDemo: mode === "fixture" },
+    data: { id: runId, orgId, runAt, source, sourceVersion, personsScreened: roster.length, matchesFound: matches.length, reportFileKey, roster: rosterJson, isDemo: mode === "fixture" },
   });
   for (const m of matches) {
-    await db.screeningMatch.create({ data: { runId, personId: m.personId, sourceRecord: m.record as object, score: m.score, matchedOn: m.matchedOn, disposition: "pending" } });
+    await db.screeningMatch.create({ data: { orgId, runId, personId: m.personId, sourceRecord: m.record as object, score: m.score, matchedOn: m.matchedOn, disposition: "pending" } });
   }
 
-  const admins = await db.user.findMany({ where: { role: "admin", active: true }, select: { email: true } });
+  const admins = await db.user.findMany({ where: { role: "org_admin", orgId, active: true }, select: { email: true } });
   const cc = (process.env.ALERT_CC ?? "").split(",").map((s) => s.trim()).filter(Boolean);
   const to = [...new Set([...admins.map((a) => a.email), ...cc])];
   if (to.length) {

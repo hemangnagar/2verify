@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
-import { getSession } from "@/lib/auth";
+import { getSession, isOrgAdmin } from "@/lib/auth";
 import { formatDate } from "@/lib/dates";
 import { PageHeader, DescriptionList, Empty } from "@/components/page-header";
 import { StatusBadge, ResultBadge } from "@/components/status-badge";
@@ -60,7 +60,7 @@ export default async function CredentialPage({ params }: { params: Promise<{ id:
             <Button asChild variant="outline">
               <Link href={`/credentials/${c.id}/edit`}>Edit</Link>
             </Button>
-            {session?.role === "admin" && c.verifications.length === 0 && <DeleteCredentialButton id={c.id} />}
+            {(session ? isOrgAdmin(session) : false) && c.verifications.length === 0 && <DeleteCredentialButton id={c.id} />}
           </>
         }
       />

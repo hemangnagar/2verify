@@ -2,7 +2,7 @@
 # Local (no Docker): copy .env.example to .env, point DATABASE_URL at a Postgres, set STORAGE_DRIVER=local.
 # Docker:            `make dev` brings up app + postgres + minio + mailpit + cron.
 
-.PHONY: help dev down migrate generate seed demo demo-reset seed-wipe test e2e lint typecheck nightly screening
+.PHONY: help dev down migrate generate seed demo demo-reset seed-wipe test test-int e2e lint typecheck nightly screening
 
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-14s %s\n", $$1, $$2}'
@@ -41,6 +41,9 @@ screening: ## run both monthly screening jobs now
 
 test: ## unit tests (vitest)
 	npx vitest run
+
+test-int: ## integration tests against DATABASE_URL (org isolation, ledger invariant)
+	npx vitest run --config vitest.int.config.mts
 
 e2e: ## playwright smoke test
 	npx playwright test

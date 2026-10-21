@@ -42,11 +42,16 @@ export interface Storage {
 
 const TTL = Number(process.env.SIGNED_URL_TTL_SECONDS ?? 600);
 
-/** Build a storage key. Filenames are sanitised; the timestamp keeps versions distinct. */
-export function fileKey(entityId: string, table: string, rowId: string, filename: string, at: Date = new Date()): string {
+/** Build a storage key: {org_id}/{entity_id}/{table}/{row_id}/{timestamp}-{filename}. Filenames are sanitised; the timestamp keeps versions distinct. */
+export function fileKey(orgId: string, entityId: string, table: string, rowId: string, filename: string, at: Date = new Date()): string {
   const safe = filename.replace(/[^A-Za-z0-9._-]+/g, "_").slice(-100);
   const ts = at.toISOString().replace(/[:.]/g, "-");
-  return `${entityId}/${table}/${rowId}/${ts}-${safe}`;
+  return `${orgId}/${entityId}/${table}/${rowId}/${ts}-${safe}`;
+}
+
+/** The org a key belongs to (first path segment). */
+export function keyOrg(key: string): string {
+  return key.split("/")[0] ?? "";
 }
 
 /** Metadata values must be ASCII and short for S3 headers. */

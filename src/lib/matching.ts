@@ -3,7 +3,8 @@
  * same matcher against fixture extracts so "run now" in the demo reproduces the seeded result.
  *
  * Match order: exact NPI → exact normalized last+first name with the same DOB → fuzzy name
- * (Jaro-Winkler on "LAST, FIRST"), flagged for review at >= REVIEW_THRESHOLD.
+ * (Jaro-Winkler on last and first name separately, weighted 60/40 so a shared surname alone does
+ * not flag), flagged for review at >= REVIEW_THRESHOLD.
  */
 
 export interface RosterPerson {
@@ -89,7 +90,9 @@ export function jaroWinkler(a: string, b: string): number {
 export function matchRoster(roster: RosterPerson[], records: ExclusionRecord[]): MatchResult[] {
   const out: MatchResult[] = [];
   for (const p of roster) {
-    const pName = `${normalizeName(p.lastName)}, ${normalizeName(p.firstName)}`;
+    const pLast = normalizeName(p.lastName);
+    const pFirst = normalizeName(p.firstName);
+    const pName = `${pLast}, ${pFirst}`;
     const pDob = p.dob ? p.dob.toISOString().slice(0, 10).replace(/-/g, "") : null;
     let best: MatchResult | null = null;
     for (const r of records) {
@@ -105,7 +108,8 @@ export function matchRoster(roster: RosterPerson[], records: ExclusionRecord[]):
           // A different DOB on both sides rules the record out, however close the name.
           if (pDob && rDob && rDob !== pDob) continue;
           // A name-only match with no DOB to corroborate (common in SAM) is capped at 0.9.
-          const score = jaroWinkler(pName, rName) * (rDob && pDob ? 1 : 0.9);
+          const nameScore = 0.6 * jaroWinkler(pLast, normalizeName(r.lastName)) + 0.4 * jaroWinkler(pFirst, normalizeName(r.firstName));
+          const score = nameScore * (rDob && pDob ? 1 : 0.9);
           if (score >= REVIEW_THRESHOLD) candidate = { personId: p.id, record: r, score, matchedOn: "fuzzy_name" };
         }
       }

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
-import { getSession } from "@/lib/auth";
+import { getSession, isOrgAdmin } from "@/lib/auth";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -16,7 +16,7 @@ export default async function EntitiesPage() {
       <PageHeader
         title="Locations"
         actions={
-          session?.role === "admin" && (
+          (session ? isOrgAdmin(session) : false) && (
             <Button asChild>
               <Link href="/entities/new">Add location</Link>
             </Button>

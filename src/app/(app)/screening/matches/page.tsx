@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
-import { getSession } from "@/lib/auth";
+import { getSession, isOrgAdmin } from "@/lib/auth";
 import { formatDate } from "@/lib/dates";
 import { PageHeader, Empty } from "@/components/page-header";
 import { DispositionBadge } from "@/components/status-badge";
@@ -24,7 +24,7 @@ export default async function MatchReviewPage() {
       <PageHeader title="Match review" description="Compare each flagged person with the exclusion record and set a disposition. Every decision is logged with who made it and when." />
       {pending.length === 0 && <Empty>No pending matches.</Empty>}
       {pending.map((m) => (
-        <MatchCard key={m.id} m={m} canReview={session?.role === "admin"} />
+        <MatchCard key={m.id} m={m} canReview={(session ? isOrgAdmin(session) : false)} />
       ))}
       {resolved.length > 0 && (
         <>

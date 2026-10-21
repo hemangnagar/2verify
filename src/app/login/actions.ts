@@ -8,7 +8,7 @@ export async function loginAction(_prev: { error?: string } | undefined, formDat
   const password = String(formData.get("password") ?? "");
   const result = await login(email, password);
   if (typeof result === "string") return { error: result };
-  redirect("/");
+  redirect(result.role === "operator" ? "/ops" : "/");
 }
 
 export async function logoutAction() {

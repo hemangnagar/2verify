@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { getSession } from "@/lib/auth";
+import { getSession, isOrgAdmin } from "@/lib/auth";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -47,7 +47,7 @@ export default async function ReportsPage() {
           <Button asChild variant="outline">
             <a href="/api/reports/csv?kind=training">Training completion by employee</a>
           </Button>
-          {session?.role === "admin" && (
+          {(session ? isOrgAdmin(session) : false) && (
             <Button asChild variant="outline">
               <a href="/api/reports/csv?kind=audit">Full change log</a>
             </Button>

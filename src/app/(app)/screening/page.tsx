@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
-import { getSession } from "@/lib/auth";
+import { getSession, isOrgAdmin } from "@/lib/auth";
 import { formatDate } from "@/lib/dates";
 import { PageHeader, Empty } from "@/components/page-header";
 import { FileLink } from "@/components/file-link";
@@ -30,7 +30,7 @@ export default async function ScreeningPage() {
           </Button>
         }
       />
-      {session?.role === "admin" && <RunButtons mode={process.env.SCREENING_MODE ?? "live"} />}
+      {(session ? isOrgAdmin(session) : false) && <RunButtons mode={process.env.SCREENING_MODE ?? "live"} />}
       {runs.length === 0 ? (
         <Empty>No screening runs yet.</Empty>
       ) : (

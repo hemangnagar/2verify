@@ -1,7 +1,6 @@
 # Phase 1 — Platform delta (Prompt A): migration plan
 
-Status: **proposal, awaiting approval before app code is written.** Prompt B (one real automated
-board) follows once this is merged.
+Status: **approved and built (Oct 2026).** Prompt B (the Texas board adapter) follows.
 
 Files in this folder:
 
@@ -218,3 +217,27 @@ Steps 1–2 are session one; step 3 is session two. Prompt B starts after that.
   `nvbop.glsuite.us`, `pharmacy.texas.gov` all refused), and NPPES too. The adapter can be built
   and unit-tested against saved HTML here, but the live probe, terms-of-use check, and the live
   smoke test need to run from the Orbitalz VPS or a laptop. Flagging now so it is not a surprise.
+
+
+---
+
+## 11. Build notes (what changed from the proposal while building)
+
+- **Lazy Prisma queries and the org context.** A Prisma query runs when awaited, not when called,
+  so `asOrg()`, `asSystem()`, `withScope()` and the action wrappers await inside the context. Returning
+  a query promise out of the callback would execute it unscoped; the integration test caught this.
+- **Audit rows and row locks.** `recordVerification()` locks the org row with `FOR NO KEY UPDATE`,
+  not `FOR UPDATE`: the audit extension writes its row outside the transaction and its foreign-key
+  check on `org` takes a KEY SHARE lock, which `FOR UPDATE` would block until the transaction timed out.
+- **One primary entity per org**: a second migration replaces the global partial unique index with
+  `(org_id) WHERE is_primary`.
+- **Backfill vs insert-only triggers**: the platform migration disables the verification and
+  audit_log triggers around the `org_id` backfill UPDATE and re-enables them.
+- **Pages derive scope from the cookie.** Server components do not run inside the action context,
+  so the client falls back to the session cookie to find the active org. Operator console pages wrap
+  their queries in `asSystem()` so they stay unscoped even while the operator is switched into an org.
+- **Fuzzy matching** now scores last and first names separately (60/40) so a shared surname alone
+  does not flag; the Okafor near-miss still scores 0.90.
+- Board lookups were seeded for TX, OK, KS and MO (Prairie's states); the OK/KS/MO URLs are best
+  guesses to confirm in Phase 2.
+- The demo `.env` sets `MAIL_DRIVER=log`, `NPPES_MODE=fixture`, `SCREENING_MODE=fixture`.

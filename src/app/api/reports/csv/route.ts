@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSession } from "@/lib/auth";
+import { getSession, isOrgAdmin } from "@/lib/auth";
 import { auditCsv, credentialsCsv, screeningCsv, trainingCsv } from "@/lib/reports";
 
 export async function GET(req: NextRequest) {
@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
       csv = await trainingCsv();
       break;
     case "audit":
-      if (session.role !== "admin") return new NextResponse("forbidden", { status: 403 });
+      if (!isOrgAdmin(session)) return new NextResponse("forbidden", { status: 403 });
       csv = await auditCsv();
       break;
     default:

@@ -1,20 +1,37 @@
 import "server-only";
 import { z } from "zod";
-import { auditContext } from "./db";
-import { requireAdmin, requireSession, type Session } from "./auth";
+import { auditContext, orgContext } from "./db";
+import { requireOperator, requireOrgAdmin, requireSession, type Session } from "./auth";
 
-/** Runs `fn` as the signed-in user with the audit context set, so every write is attributed. */
+function run<T>(s: Session, fn: (s: Session) => Promise<T>): Promise<T> {
+  // Prisma queries execute lazily when awaited; awaiting inside keeps them in the org context.
+  return auditContext.run({ userId: s.userId }, () =>
+    orgContext.run({ orgId: s.activeOrgId, role: s.role }, async () => {
+      return await fn(s);
+    })
+  );
+}
+
+/** Runs `fn` as the signed-in user, scoped to their active org, with the audit context set. */
 export async function withUser<T>(fn: (s: Session) => Promise<T>): Promise<T> {
-  const s = await requireSession();
-  return auditContext.run({ userId: s.userId }, () => fn(s));
+  return run(await requireSession(), fn);
 }
 
-export async function withAdmin<T>(fn: (s: Session) => Promise<T>): Promise<T> {
-  const s = await requireAdmin();
-  return auditContext.run({ userId: s.userId }, () => fn(s));
+export async function withOrgAdmin<T>(fn: (s: Session) => Promise<T>): Promise<T> {
+  return run(await requireOrgAdmin(), fn);
 }
 
-export type ActionState = { error?: string; ok?: boolean } | undefined;
+/** Operators acting on the platform itself (orgs, plans): unscoped. */
+export async function withOperator<T>(fn: (s: Session) => Promise<T>): Promise<T> {
+  const s = await requireOperator();
+  return auditContext.run({ userId: s.userId }, () =>
+    orgContext.run({ orgId: null, role: "operator" }, async () => {
+      return await fn(s);
+    })
+  );
+}
+
+export type ActionState = { error?: string; ok?: boolean; message?: string } | undefined;
 
 /** Parse FormData with a zod schema; returns the error string for the form on failure. */
 export function parseForm<T extends z.ZodTypeAny>(schema: T, formData: FormData): { data: z.infer<T> } | { error: string } {

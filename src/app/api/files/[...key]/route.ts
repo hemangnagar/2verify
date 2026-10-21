@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
-import { storage, verifyLocalSignature } from "@/lib/storage";
+import { keyOrg, storage, verifyLocalSignature } from "@/lib/storage";
 
 /**
  * File access. For S3 storage: an authenticated user is redirected to a short-lived signed URL.
@@ -15,7 +15,12 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ key: string
   const exp = Number(req.nextUrl.searchParams.get("exp"));
   const sig = req.nextUrl.searchParams.get("sig") ?? "";
   const signed = sig && verifyLocalSignature(key, exp, sig);
-  if (!signed && !(await getSession())) return new NextResponse("unauthorized", { status: 401 });
+  if (!signed) {
+    const session = await getSession();
+    if (!session) return new NextResponse("unauthorized", { status: 401 });
+    // Files are namespaced by org; a session may only reach its active org's prefix.
+    if (session.role !== "operator" && keyOrg(key) !== session.activeOrgId) return new NextResponse("forbidden", { status: 403 });
+  }
 
   if ((process.env.STORAGE_DRIVER ?? "s3") !== "local") {
     return NextResponse.redirect(await storage().signedUrl(key));

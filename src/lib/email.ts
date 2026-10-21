@@ -1,4 +1,5 @@
 import nodemailer, { type Transporter } from "nodemailer";
+import { brand } from "@/config/brand";
 
 export interface Mail {
   to: string | string[];
@@ -31,7 +32,7 @@ export async function sendMail(mail: Mail) {
     console.log(`[mail:log] to=${Array.isArray(mail.to) ? mail.to.join(",") : mail.to} subject="${mail.subject}" attachments=${mail.attachments?.length ?? 0}`);
     return;
   }
-  await getTransport().sendMail({ from: process.env.MAIL_FROM ?? "compliance@example.com", ...mail });
+  await getTransport().sendMail({ from: process.env.MAIL_FROM ?? `"${brand.fromName}" <no-reply@2verify.example.com>`, ...mail });
 }
 
 /** Everyone who gets every alert in addition to the credential holder. */

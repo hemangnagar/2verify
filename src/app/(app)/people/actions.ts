@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { db } from "@/lib/db";
+import { currentOrgId, db } from "@/lib/db";
 import { parseForm, withUser, zDate, zOptStr, type ActionState } from "@/lib/action";
 import { verifyNpi } from "@/lib/nppes";
 
@@ -36,7 +36,7 @@ export async function createPerson(_prev: ActionState, formData: FormData): Prom
   let id = "";
   try {
     id = await withUser(async () => {
-      const p = await db.person.create({ data: { ...d, entityId: d.entityId } });
+      const p = await db.person.create({ data: { ...d, orgId: currentOrgId(), entityId: d.entityId } });
       await afterSave(p.id, !!d.npi);
       return p.id;
     });

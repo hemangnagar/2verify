@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { requireAdmin } from "@/lib/auth";
+import { requireOrgAdmin } from "@/lib/auth";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,7 @@ import { updateCredentialType } from "../actions";
 export const dynamic = "force-dynamic";
 
 export default async function CredentialTypesPage() {
-  await requireAdmin();
+  await requireOrgAdmin();
   const types = await db.credentialType.findMany({ orderBy: [{ category: "asc" }, { name: "asc" }], include: { _count: { select: { credentials: true } } } });
   return (
     <div className="grid gap-6">

@@ -1,9 +1,10 @@
 /**
- * Removes every demo row and file so real data can be imported into a clean system.
- * Keeps: credential types, board lookups, the env admin user, and audit rows for non-demo data.
+ * Removes every demo organization and its files so real customers can be onboarded into a clean
+ * platform. Keeps: plans, credential types, board lookups, the operator user, and non-demo orgs.
  *
- * Insert-only tables (verification, audit_log) are cleared for demo rows inside one transaction
- * that sets `app.allow_wipe = 'on'`, the only thing the DB trigger accepts a DELETE under.
+ * Insert-only tables (verification, audit_log, credit_ledger) are cleared for demo orgs inside one
+ * transaction that sets `app.allow_wipe = 'on'`, the only thing the DB trigger accepts a DELETE under.
+ * Everything else cascades from the org row.
  *
  * Refuses to run without CONFIRM_WIPE=yes.
  */
@@ -16,42 +17,24 @@ async function main() {
     console.error("Refusing to wipe. Re-run with CONFIRM_WIPE=yes (make seed-wipe CONFIRM_WIPE=yes).");
     process.exit(2);
   }
-
-  const entities = await dbRaw.entity.findMany({ where: { isDemo: true }, select: { id: true } });
-  const people = await dbRaw.person.findMany({ where: { isDemo: true }, select: { id: true } });
-  const credentials = await dbRaw.credential.findMany({ where: { isDemo: true }, select: { id: true } });
-  const runs = await dbRaw.screeningRun.findMany({ where: { isDemo: true }, select: { id: true } });
-  const credIds = credentials.map((c) => c.id);
-  const runIds = runs.map((r) => r.id);
-  const verifications = await dbRaw.verification.findMany({ where: { credentialId: { in: credIds } }, select: { id: true } });
-  const matches = await dbRaw.screeningMatch.findMany({ where: { runId: { in: runIds } }, select: { id: true } });
-  const alerts = await dbRaw.alert.findMany({ where: { isDemo: true }, select: { id: true } });
-  const demoUsers = await dbRaw.user.findMany({ where: { email: "verifier@sierra-rx.example.com" }, select: { id: true } });
-
-  const allIds = [
-    ...entities, ...people, ...credentials, ...runs, ...verifications, ...matches, ...alerts, ...demoUsers,
-  ].map((r) => r.id);
-
+  const orgs = await dbRaw.org.findMany({ where: { isDemo: true }, select: { id: true, slug: true } });
+  if (!orgs.length) {
+    console.log("No demo organizations found.");
+    return;
+  }
+  const ids = orgs.map((o) => o.id);
   const result = await dbRaw.$transaction(async (tx) => {
     await tx.$executeRawUnsafe(`SET LOCAL app.allow_wipe = 'on'`);
-    const v = await tx.verification.deleteMany({ where: { credentialId: { in: credIds } } });
-    const a = await tx.alert.deleteMany({ where: { isDemo: true } });
-    const m = await tx.screeningMatch.deleteMany({ where: { runId: { in: runIds } } });
-    const r = await tx.screeningRun.deleteMany({ where: { isDemo: true } });
-    const c = await tx.credential.deleteMany({ where: { isDemo: true } });
-    const p = await tx.person.deleteMany({ where: { isDemo: true } });
-    const e = await tx.entity.deleteMany({ where: { isDemo: true } });
-    // Audit rows written by the demo verifier must go before the user row.
-    const au = await tx.auditLog.deleteMany({ where: { OR: [{ rowId: { in: allIds } }, { userId: { in: demoUsers.map((u) => u.id) } }] } });
-    const u = await tx.user.deleteMany({ where: { id: { in: demoUsers.map((u) => u.id) } } });
-    return { verifications: v.count, alerts: a.count, matches: m.count, runs: r.count, credentials: c.count, people: p.count, entities: e.count, auditRows: au.count, users: u.count };
+    const l = await tx.creditLedger.deleteMany({ where: { orgId: { in: ids } } });
+    const v = await tx.verification.deleteMany({ where: { orgId: { in: ids } } });
+    const a = await tx.auditLog.deleteMany({ where: { OR: [{ orgId: { in: ids } }, { user: { orgId: { in: ids } } }] } });
+    const o = await tx.org.deleteMany({ where: { id: { in: ids } } }); // cascades entities, people, credentials, alerts, runs, matches, users
+    return { ledgerRows: l.count, verifications: v.count, auditRows: a.count, orgs: o.count };
   });
-
   let files = 0;
-  for (const e of entities) files += await storage().deletePrefix(`${e.id}/`);
-
+  for (const id of ids) files += await storage().deletePrefix(`${id}/`);
   console.table({ ...result, files });
-  console.log("Demo data removed. Catalog, board lookups, and the env admin user were kept.");
+  console.log(`Removed demo orgs: ${orgs.map((o) => o.slug).join(", ")}. Plans, catalog, board lookups, and the operator user were kept.`);
 }
 
 main()

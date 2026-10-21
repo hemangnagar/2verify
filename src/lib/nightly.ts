@@ -1,5 +1,5 @@
 import type { AlertKind } from "@prisma/client";
-import { db } from "./db";
+import { asOrg, asSystem, db } from "./db";
 import { recomputeCredential } from "./credentials";
 import { expiryAlertsDueBy } from "./status";
 import { dateOnly, daysBetween, isoDate } from "./dates";
@@ -22,7 +22,22 @@ export interface NightlyResult {
  *     so the next cycle's alerts go out again.
  *  3. Send one verify_due alert when primary-source verification is overdue, once per due date.
  */
-export async function runNightly(today: Date = new Date()): Promise<NightlyResult> {
+export async function runNightly(today: Date = new Date()): Promise<NightlyResult & { orgs: number }> {
+  const orgs = await asSystem(() => db.org.findMany({ where: { status: { not: "suspended" } }, select: { id: true, name: true } }));
+  const total: NightlyResult & { orgs: number } = { orgs: orgs.length, credentials: 0, statusChanges: 0, alertsSent: 0, verifyDueAlerts: 0, skippedAlreadySent: 0 };
+  for (const org of orgs) {
+    const r = await asOrg(org.id, () => runNightlyForOrg(today));
+    total.credentials += r.credentials;
+    total.statusChanges += r.statusChanges;
+    total.alertsSent += r.alertsSent;
+    total.verifyDueAlerts += r.verifyDueAlerts;
+    total.skippedAlreadySent += r.skippedAlreadySent;
+  }
+  return total;
+}
+
+/** One org, already in scope. */
+export async function runNightlyForOrg(today: Date = new Date()): Promise<NightlyResult> {
   const t = dateOnly(today);
   const result: NightlyResult = { credentials: 0, statusChanges: 0, alertsSent: 0, verifyDueAlerts: 0, skippedAlreadySent: 0 };
   const ids = await db.credential.findMany({ select: { id: true } });

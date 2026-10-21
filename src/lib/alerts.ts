@@ -1,5 +1,5 @@
 import type { AlertKind } from "@prisma/client";
-import { db } from "./db";
+import { currentOrgId, db } from "./db";
 import { alertCcList, sendMail } from "./email";
 
 /**
@@ -16,7 +16,8 @@ export async function sendAlert(opts: {
   holderEmail?: string | null;
   sentAt?: Date;
 }): Promise<number> {
-  const admins = await db.user.findMany({ where: { role: "admin", active: true }, select: { email: true } });
+  const orgId = currentOrgId();
+  const admins = await db.user.findMany({ where: { role: "org_admin", orgId, active: true }, select: { email: true } });
   const recipients = [...new Set([...(opts.holderEmail ? [opts.holderEmail] : []), ...alertCcList(), ...admins.map((a) => a.email)])];
   if (!recipients.length) return 0;
   try {
@@ -26,7 +27,7 @@ export async function sendAlert(opts: {
     return 0;
   }
   for (const to of recipients) {
-    await db.alert.create({ data: { credentialId: opts.credentialId, sentTo: to, kind: opts.kind, subject: opts.subject, sentAt: opts.sentAt ?? new Date() } });
+    await db.alert.create({ data: { orgId, credentialId: opts.credentialId, sentTo: to, kind: opts.kind, subject: opts.subject, sentAt: opts.sentAt ?? new Date() } });
   }
   return recipients.length;
 }

@@ -3,8 +3,8 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { db } from "@/lib/db";
-import { parseForm, withAdmin, zOptStr, type ActionState } from "@/lib/action";
+import { currentOrgId, db } from "@/lib/db";
+import { parseForm, withOrgAdmin, zOptStr, type ActionState } from "@/lib/action";
 import { verifyNpi } from "@/lib/nppes";
 
 const schema = z.object({
@@ -27,9 +27,9 @@ export async function createEntity(_prev: ActionState, formData: FormData): Prom
   const d = parsed.data;
   let id = "";
   try {
-    id = await withAdmin(async () => {
+    id = await withOrgAdmin(async () => {
       const count = await db.entity.count();
-      const e = await db.entity.create({ data: { ...d, isPrimary: false } });
+      const e = await db.entity.create({ data: { ...d, orgId: currentOrgId(), isPrimary: false } });
       if (d.isPrimary || count === 0) await setPrimary(e.id);
       if (d.npi) await verifyNpi({ entityId: e.id }).catch((err) => console.error("NPPES:", err.message));
       return e.id;
@@ -46,7 +46,7 @@ export async function updateEntity(id: string, _prev: ActionState, formData: For
   if ("error" in parsed) return { error: parsed.error };
   const d = parsed.data;
   try {
-    await withAdmin(async () => {
+    await withOrgAdmin(async () => {
       const before = await db.entity.findUniqueOrThrow({ where: { id } });
       await db.entity.update({ where: { id }, data: { name: d.name, npi: d.npi, deaNumber: d.deaNumber, state: d.state, address: d.address } });
       if (d.isPrimary && !before.isPrimary) await setPrimary(id);

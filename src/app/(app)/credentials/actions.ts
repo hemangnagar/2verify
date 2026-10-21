@@ -3,8 +3,8 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { db } from "@/lib/db";
-import { parseForm, withAdmin, withUser, zDate, zFile, zInt, zOptStr, type ActionState } from "@/lib/action";
+import { currentOrgId, db } from "@/lib/db";
+import { parseForm, withOrgAdmin, withUser, zDate, zFile, zInt, zOptStr, type ActionState } from "@/lib/action";
 import { fileKey, storage } from "@/lib/storage";
 import { recomputeCredential } from "@/lib/credentials";
 
@@ -24,7 +24,7 @@ const schema = z.object({
 });
 
 async function storeDocument(ownerEntityId: string, credentialId: string, file: File) {
-  const key = fileKey(ownerEntityId, "credential", credentialId, file.name);
+  const key = fileKey(currentOrgId(), ownerEntityId, "credential", credentialId, file.name);
   await storage().put(key, Buffer.from(await file.arrayBuffer()), { contentType: file.type || "application/octet-stream", metadata: { kind: "credential-document" } });
   return key;
 }
@@ -52,6 +52,7 @@ export async function createCredential(_prev: ActionState, formData: FormData): 
       const type = await db.credentialType.findUniqueOrThrow({ where: { id: d.credentialTypeId } });
       const c = await db.credential.create({
         data: {
+          orgId: currentOrgId(),
           subjectType: d.subjectType,
           personId: d.subjectType === "person" ? d.personId : null,
           entityId: d.subjectType === "entity" ? d.entityId : null,
@@ -114,7 +115,7 @@ export async function updateCredential(id: string, _prev: ActionState, formData:
 
 /** Admin only. Verifications are insert-only, so a credential with evidence cannot be deleted; it is kept for the record. */
 export async function deleteCredential(id: string) {
-  await withAdmin(async () => {
+  await withOrgAdmin(async () => {
     const n = await db.verification.count({ where: { credentialId: id } });
     if (n > 0) throw new Error("This credential has verification evidence and cannot be deleted. Set an expiry in the past or mark the person inactive instead.");
     await db.credential.delete({ where: { id } });

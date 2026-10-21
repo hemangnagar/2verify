@@ -1,5 +1,14 @@
 import type { CredentialCategory, PersonRole } from "@prisma/client";
 
+/** The five one-pager tiers. Prices in cents. Ids are stable so the migration and seed agree. */
+export const PLANS = [
+  { id: "plan_track", name: "Track", annualPriceCents: 0, creditsPerYear: 0, overageCents: 600, sortOrder: 1 },
+  { id: "plan_core", name: "Core", annualPriceCents: 120000, creditsPerYear: 240, overageCents: 500, sortOrder: 2 },
+  { id: "plan_team", name: "Team", annualPriceCents: 555000, creditsPerYear: 1200, overageCents: 462, sortOrder: 3 },
+  { id: "plan_advanced", name: "Advanced", annualPriceCents: 1020000, creditsPerYear: 2400, overageCents: 425, sortOrder: 4 },
+  { id: "plan_enterprise", name: "Enterprise", annualPriceCents: 1395000, creditsPerYear: 3600, overageCents: 388, sortOrder: 5 },
+];
+
 /** Credential type catalog. Names are stable identifiers used by the demo seed and the CSV importer. */
 export const CREDENTIAL_TYPES: Array<{
   name: string;
@@ -85,6 +94,66 @@ export const BOARD_LOOKUPS: Array<{ state: string; typeName: string; boardName: 
     state: "CA", typeName: "Nonresident Pharmacy Permit", boardName: "California State Board of Pharmacy (DCA License Search)",
     urlTemplate: "https://search.dca.ca.gov/results?boardCode=0&licenseType=NRP&licenseNumber={number}",
     notes: "License type NRP.",
+  },
+  {
+    state: "TX", typeName: "Pharmacy Permit", boardName: "Texas State Board of Pharmacy",
+    urlTemplate: "https://www.pharmacy.texas.gov/dbsearch/phy_zoom.asp?id={number}&type=1",
+    notes: "Number search opens the permit detail directly: Status, Expiration, 'Prior Disciplinary Orders'. Automated adapter candidate (see docs/boards/TX.md).",
+  },
+  {
+    state: "TX", typeName: "Pharmacist License", boardName: "Texas State Board of Pharmacy",
+    urlTemplate: "https://www.pharmacy.texas.gov/dbsearch/",
+    notes: "Choose Pharmacist search, enter license number. Detail shows Status, Expiration, Disciplinary Orders.",
+  },
+  {
+    state: "TX", typeName: "Pharmacy Technician License", boardName: "Texas State Board of Pharmacy",
+    urlTemplate: "https://www.pharmacy.texas.gov/dbsearch/",
+    notes: "Choose Technician search. Registration number is numeric.",
+  },
+  {
+    state: "TX", typeName: "Prescriber State License", boardName: "Texas Medical Board",
+    urlTemplate: "https://profile.tmb.state.tx.us/Search.aspx",
+    notes: "Search by license number; the physician profile shows Status, Expiration, and Board Actions.",
+  },
+  {
+    state: "OK", typeName: "Pharmacy Permit", boardName: "Oklahoma State Board of Pharmacy",
+    urlTemplate: "https://pharmacy.ok.gov/license-verification/",
+    notes: "License verification portal; search by license number. Confirm the current portal URL before Phase 2.",
+  },
+  {
+    state: "OK", typeName: "Pharmacist License", boardName: "Oklahoma State Board of Pharmacy",
+    urlTemplate: "https://pharmacy.ok.gov/license-verification/",
+    notes: "Same portal; pharmacist license type.",
+  },
+  {
+    state: "OK", typeName: "Pharmacy Technician License", boardName: "Oklahoma State Board of Pharmacy",
+    urlTemplate: "https://pharmacy.ok.gov/license-verification/",
+    notes: "Same portal; technician permit type.",
+  },
+  {
+    state: "OK", typeName: "Prescriber State License", boardName: "Oklahoma State Board of Medical Licensure and Supervision",
+    urlTemplate: "https://www.okmedicalboard.org/search",
+    notes: "Search by license number; shows Status, Expiration, and Board Actions.",
+  },
+  {
+    state: "KS", typeName: "Nonresident Pharmacy Permit", boardName: "Kansas State Board of Pharmacy",
+    urlTemplate: "https://pharmacy.ks.gov/license-verification",
+    notes: "Verification portal; nonresident pharmacy registrations are listed under Pharmacy.",
+  },
+  {
+    state: "KS", typeName: "Pharmacist License", boardName: "Kansas State Board of Pharmacy",
+    urlTemplate: "https://pharmacy.ks.gov/license-verification",
+    notes: "Search by license number (format 1-xxxxx).",
+  },
+  {
+    state: "MO", typeName: "Nonresident Pharmacy Permit", boardName: "Missouri Board of Pharmacy (Division of Professional Registration)",
+    urlTemplate: "https://pr.mo.gov/licensee-search.asp",
+    notes: "Statewide licensee search; choose Pharmacy. Shows Status and Expiration.",
+  },
+  {
+    state: "MO", typeName: "Pharmacist License", boardName: "Missouri Board of Pharmacy (Division of Professional Registration)",
+    urlTemplate: "https://pr.mo.gov/licensee-search.asp",
+    notes: "Statewide licensee search; choose Pharmacist.",
   },
   {
     state: "NV", typeName: "Prescriber State License", boardName: "Nevada State Board of Medical Examiners",

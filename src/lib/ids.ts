@@ -76,6 +76,18 @@ export function fakeLicenseNumber(rand: () => number, state: string, kind: "phar
     case "AZ:pharmacy": return `Y${n(6)}`;
     case "NV:medical": return `${n(5)}`;
     case "AZ:medical": return `${n(5)}`;
+    case "TX:pharmacist": return `${n(5)}`;
+    case "TX:technician": return `${n(6)}`;
+    case "TX:pharmacy": return `${n(5)}`;
+    case "TX:medical": return `${n(5)}`;
+    case "OK:pharmacist": return `${n(5)}`;
+    case "OK:technician": return `T${n(5)}`;
+    case "OK:pharmacy": return `${n(5)}`;
+    case "OK:medical": return `${n(5)}`;
+    case "KS:pharmacist": return `1-${n(5)}`;
+    case "KS:pharmacy": return `2-${n(5)}`;
+    case "MO:pharmacist": return `2${n(9)}`;
+    case "MO:pharmacy": return `2${n(9)}`;
     default: return n(7);
   }
 }

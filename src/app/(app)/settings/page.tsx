@@ -1,10 +1,10 @@
 import Link from "next/link";
-import { requireAdmin } from "@/lib/auth";
+import { requireOrgAdmin } from "@/lib/auth";
 import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default async function SettingsPage() {
-  await requireAdmin();
+  await requireOrgAdmin();
   return (
     <div className="grid gap-6">
       <PageHeader title="Settings" />

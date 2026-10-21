@@ -3,12 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { withAdmin, parseForm, zOptStr, type ActionState } from "@/lib/action";
+import { withOrgAdmin, parseForm, zOptStr, type ActionState } from "@/lib/action";
 import { runScreening } from "@/lib/screening";
 
 export async function runScreeningNow(source: "oig_leie" | "sam"): Promise<ActionState> {
   try {
-    await withAdmin(() => runScreening(source));
+    await withOrgAdmin(() => runScreening(source));
   } catch (e) {
     return { error: (e as Error).message };
   }
@@ -27,7 +27,7 @@ export async function setDisposition(_prev: ActionState, formData: FormData): Pr
   if ("error" in parsed) return { error: parsed.error };
   const d = parsed.data;
   try {
-    await withAdmin(async (session) => {
+    await withOrgAdmin(async (session) => {
       await db.screeningMatch.update({
         where: { id: d.matchId },
         data: { disposition: d.disposition, reviewNote: d.reviewNote, reviewedById: session.userId, reviewedAt: new Date() },

@@ -25,8 +25,22 @@ datasource db {
 // ---------------------------------------------------------------------------
 
 enum UserRole {
-  admin
-  verifier
+  operator // 2Verify staff: no org, may switch into any org
+  org_admin // customer admin: full access within their org
+  verifier // queue, verify page, read-only elsewhere
+}
+
+enum OrgStatus {
+  trial
+  active
+  suspended
+}
+
+enum CreditReason {
+  allotment // annual plan credits granted
+  verification // one credit per verification row (auto or manual)
+  adjustment // operator correction, signed
+  overage // purchased overage pack
 }
 
 enum PersonRole {
@@ -62,8 +76,9 @@ enum CredentialStatus {
 }
 
 enum VerificationMethod {
-  auto_api
-  manual_board
+  auto_api // federal API (NPPES, PECOS)
+  manual_board // guided verifier workbench
+  auto_board // headless-browser board adapter (Prompt B)
 }
 
 enum VerificationResult {
@@ -102,11 +117,83 @@ enum AuditAction {
 }
 
 // ---------------------------------------------------------------------------
+// Platform: organizations, plans, credits
+// ---------------------------------------------------------------------------
+
+/// The five one-pager tiers. Prices in cents. Seeded, not user-editable in the POC.
+model Plan {
+  id               String @id @default(cuid())
+  name             String @unique
+  annualPriceCents Int    @map("annual_price_cents")
+  creditsPerYear   Int    @map("credits_per_year")
+  overageCents     Int    @map("overage_cents") // per credit past the allotment
+  sortOrder        Int    @default(0) @map("sort_order")
+
+  orgs Org[]
+
+  @@map("plan")
+}
+
+/// A customer pharmacy group. Every domain row belongs to exactly one org.
+model Org {
+  id               String    @id @default(cuid())
+  name             String
+  slug             String    @unique
+  planId           String    @map("plan_id")
+  status           OrgStatus @default(trial)
+  /// Subscribed jurisdictions (2-letter codes), billed at the per-state fee. Max 51.
+  subscribedStates String[]  @default([]) @map("subscribed_states")
+  /// Start of the current subscription year; credits and the usage page count from here.
+  termStartsOn     DateTime  @map("term_starts_on") @db.Date
+  isDemo           Boolean   @default(false) @map("is_demo")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  plan             Plan             @relation(fields: [planId], references: [id])
+  users            User[]
+  entities         Entity[]
+  people           Person[]
+  credentials      Credential[]
+  verifications    Verification[]
+  screeningRuns    ScreeningRun[]
+  screeningMatches ScreeningMatch[]
+  alerts           Alert[]
+  auditEntries     AuditLog[]
+  ledger           CreditLedger[]
+
+  @@map("org")
+}
+
+/// INSERT ONLY (trigger). One row per credit movement; balance_after is the running balance.
+/// Invariant (tested): for every org, sum(delta) == balance_after of the newest row.
+model CreditLedger {
+  id             String       @id @default(cuid())
+  orgId          String       @map("org_id")
+  delta          Int
+  reason         CreditReason
+  /// Set for reason = verification; unique, so a verification can never be charged twice.
+  verificationId String?      @unique @map("verification_id")
+  balanceAfter   Int          @map("balance_after")
+  note           String?
+  createdById    String?      @map("created_by") // null = system
+  createdAt      DateTime     @default(now()) @map("created_at")
+
+  org          Org           @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  verification Verification? @relation(fields: [verificationId], references: [id], onDelete: Restrict)
+  createdBy    User?         @relation(fields: [createdById], references: [id], onDelete: Restrict)
+
+  @@index([orgId, createdAt])
+  @@map("credit_ledger")
+}
+
+// ---------------------------------------------------------------------------
 // Auth
 // ---------------------------------------------------------------------------
 
 model User {
   id           String   @id @default(cuid())
+  /// null only for operators
+  orgId        String?  @map("org_id")
   email        String   @unique
   name         String
   passwordHash String   @map("password_hash")
@@ -115,10 +202,13 @@ model User {
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
+  org             Org?             @relation(fields: [orgId], references: [id], onDelete: Cascade)
   verifications   Verification[]
   reviewedMatches ScreeningMatch[]
   auditEntries    AuditLog[]
+  ledgerEntries   CreditLedger[]
 
+  @@index([orgId])
   @@map("user")
 }
 
@@ -129,9 +219,10 @@ model User {
 /// The legal entity and each location. Exactly one row has is_primary = true.
 model Entity {
   id        String   @id @default(cuid())
+  orgId     String   @map("org_id")
   name      String
-  npi       String?  @unique
-  deaNumber String?  @unique @map("dea_number")
+  npi       String?
+  deaNumber String?  @map("dea_number")
   state     String   @db.Char(2)
   address   String
   isPrimary Boolean  @default(false) @map("is_primary")
@@ -139,33 +230,42 @@ model Entity {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  org         Org          @relation(fields: [orgId], references: [id], onDelete: Cascade)
   people      Person[]
   credentials Credential[]
 
+  @@unique([orgId, npi])
+  @@unique([orgId, deaNumber])
+  @@index([orgId])
   @@map("entity")
 }
 
 /// Staff and prescribers. DOB is held only for exclusion matching.
 model Person {
   id        String     @id @default(cuid())
+  orgId     String     @map("org_id")
   entityId  String?    @map("entity_id") // home location; null for outside prescribers
   firstName String     @map("first_name")
   lastName  String     @map("last_name")
-  email     String?    @unique // added: alert recipient
+  email     String? // alert recipient
   role      PersonRole
   dob       DateTime?  @db.Date
-  npi       String?    @unique
+  /// Unique per org, not globally: the same prescriber can be billed under by several customers.
+  npi       String?
   hireDate  DateTime?  @map("hire_date") @db.Date
   active    Boolean    @default(true)
   isDemo    Boolean    @default(false) @map("is_demo")
   createdAt DateTime   @default(now()) @map("created_at")
   updatedAt DateTime   @updatedAt @map("updated_at")
 
+  org              Org              @relation(fields: [orgId], references: [id], onDelete: Cascade)
   entity           Entity?          @relation(fields: [entityId], references: [id], onDelete: SetNull)
   credentials      Credential[]
   screeningMatches ScreeningMatch[]
 
-  @@index([lastName, firstName])
+  @@unique([orgId, email])
+  @@unique([orgId, npi])
+  @@index([orgId, lastName, firstName])
   @@map("person")
 }
 
@@ -212,6 +312,7 @@ model BoardLookup {
 /// One row per license, permit, registration, cert, policy, contract, or training completion.
 model Credential {
   id               String           @id @default(cuid())
+  orgId            String           @map("org_id")
   subjectType      SubjectType      @map("subject_type")
   personId         String?          @map("person_id")
   entityId         String?          @map("entity_id")
@@ -230,6 +331,7 @@ model Credential {
   createdAt        DateTime         @default(now()) @map("created_at")
   updatedAt        DateTime         @updatedAt @map("updated_at")
 
+  org            Org            @relation(fields: [orgId], references: [id], onDelete: Cascade)
   person         Person?        @relation(fields: [personId], references: [id], onDelete: Cascade)
   entity         Entity?        @relation(fields: [entityId], references: [id], onDelete: Cascade)
   credentialType CredentialType @relation(fields: [credentialTypeId], references: [id])
@@ -240,9 +342,9 @@ model Credential {
   //     OR (subject_type='entity' AND entity_id IS NOT NULL AND person_id IS NULL))
   // is added in prisma/sql/001_immutability_triggers.sql (Prisma has no CHECK support).
 
-  @@index([expiresOn])
-  @@index([nextVerifyDue])
-  @@index([status])
+  @@index([orgId, expiresOn])
+  @@index([orgId, nextVerifyDue])
+  @@index([orgId, status])
   @@index([personId])
   @@index([entityId])
   @@map("credential")
@@ -255,6 +357,7 @@ model Credential {
 /// Immutable evidence of each primary-source verification. UPDATE/DELETE rejected by trigger.
 model Verification {
   id              String             @id @default(cuid())
+  orgId           String             @map("org_id")
   credentialId    String             @map("credential_id")
   /// null = system job (auto_api)
   verifiedById    String?            @map("verified_by")
@@ -271,10 +374,13 @@ model Verification {
   statusBefore    CredentialStatus?  @map("status_before")
   expiresBefore   DateTime?          @map("expires_before") @db.Date
 
-  credential Credential @relation(fields: [credentialId], references: [id], onDelete: Restrict)
-  verifiedBy User?      @relation(fields: [verifiedById], references: [id], onDelete: Restrict)
+  org        Org           @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  credential Credential    @relation(fields: [credentialId], references: [id], onDelete: Restrict)
+  verifiedBy User?         @relation(fields: [verifiedById], references: [id], onDelete: Restrict)
+  ledger     CreditLedger?
 
   @@index([credentialId, verifiedAt])
+  @@index([orgId, verifiedAt])
   @@map("verification")
 }
 
@@ -285,6 +391,7 @@ model Verification {
 /// One row per monthly OIG/SAM run. Report PDF is stored even when matches_found = 0.
 model ScreeningRun {
   id              String          @id @default(cuid())
+  orgId           String          @map("org_id")
   runAt           DateTime        @default(now()) @map("run_at")
   source          ScreeningSource
   /// e.g. LEIE file date "2026-09-08" or SAM API extract date
@@ -296,15 +403,17 @@ model ScreeningRun {
   roster          Json
   isDemo          Boolean         @default(false) @map("is_demo")
 
+  org     Org              @relation(fields: [orgId], references: [id], onDelete: Cascade)
   matches ScreeningMatch[]
 
-  @@index([source, runAt])
+  @@index([orgId, source, runAt])
   @@map("screening_run")
 }
 
 /// Flagged candidate from a run. Disposition is the only field that changes after insert.
 model ScreeningMatch {
   id           String           @id @default(cuid())
+  orgId        String           @map("org_id")
   runId        String           @map("run_id")
   personId     String           @map("person_id")
   sourceRecord Json             @map("source_record")
@@ -316,11 +425,12 @@ model ScreeningMatch {
   disposition  MatchDisposition @default(pending)
   reviewNote   String?          @map("review_note")
 
+  org        Org          @relation(fields: [orgId], references: [id], onDelete: Cascade)
   run        ScreeningRun @relation(fields: [runId], references: [id], onDelete: Cascade)
   person     Person       @relation(fields: [personId], references: [id], onDelete: Cascade)
   reviewedBy User?        @relation(fields: [reviewedById], references: [id], onDelete: Restrict)
 
-  @@index([disposition])
+  @@index([orgId, disposition])
   @@map("screening_match")
 }
 
@@ -331,6 +441,7 @@ model ScreeningMatch {
 /// What was sent, to whom, when, for which credential. One row per recipient.
 model Alert {
   id           String    @id @default(cuid())
+  orgId        String    @map("org_id")
   credentialId String    @map("credential_id")
   sentTo       String    @map("sent_to")
   sentAt       DateTime  @default(now()) @map("sent_at")
@@ -338,12 +449,14 @@ model Alert {
   subject      String
   isDemo       Boolean   @default(false) @map("is_demo")
 
+  org        Org        @relation(fields: [orgId], references: [id], onDelete: Cascade)
   credential Credential @relation(fields: [credentialId], references: [id], onDelete: Cascade)
 
   // The nightly job must not re-send the same lead alert: one (credential, kind, sentTo) per expiry cycle.
   // Enforced in the job using the credential's current expires_on, not as a unique index, because
   // the same credential legitimately gets a new lead_90 after renewal.
   @@index([credentialId, kind])
+  @@index([orgId])
   @@map("alert")
 }
 
@@ -355,6 +468,8 @@ model Alert {
 /// UPDATE/DELETE rejected by trigger.
 model AuditLog {
   id     String      @id @default(cuid())
+  /// null only for platform-level rows (plans, operator users); org rows carry their org
+  orgId  String?     @map("org_id")
   at     DateTime    @default(now())
   /// null = system job
   userId String?     @map("user_id")
@@ -364,9 +479,10 @@ model AuditLog {
   before Json?
   after  Json?
 
+  org  Org?  @relation(fields: [orgId], references: [id], onDelete: Cascade)
   user User? @relation(fields: [userId], references: [id], onDelete: Restrict)
 
   @@index([table, rowId])
-  @@index([at])
+  @@index([orgId, at])
   @@map("audit_log")
 }

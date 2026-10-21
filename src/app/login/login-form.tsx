@@ -12,8 +12,8 @@ export function LoginForm() {
   return (
     <Card className="w-full max-w-sm">
       <CardHeader>
-        <CardTitle className="text-xl">Compliance Tracker</CardTitle>
-        <CardDescription>Sign in to continue</CardDescription>
+        <CardTitle className="text-xl">Sign in</CardTitle>
+        <CardDescription>Use the account your organization or 2Verify gave you.</CardDescription>
       </CardHeader>
       <CardContent>
         <form action={action} className="grid gap-4">

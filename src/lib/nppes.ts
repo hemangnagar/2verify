@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
-import { db } from "./db";
+import { currentOrgId, db } from "./db";
+import { recordVerification } from "./verifications";
 import { fileKey, storage } from "./storage";
 import { recomputeCredential } from "./credentials";
 import { fakeNppesResponse, TAXONOMY } from "./nppes-fixture";
@@ -22,11 +23,13 @@ export async function verifyNpi(subject: { personId?: string; entityId?: string 
   const npi = person?.npi ?? entity?.npi;
   if (!npi) return { skipped: true as const, reason: "no NPI on record" };
 
+  const orgId = currentOrgId();
   const type = await db.credentialType.findUniqueOrThrow({ where: { name: "NPI" } });
   let credential = await db.credential.findFirst({ where: { credentialTypeId: type.id, personId: person?.id ?? undefined, entityId: entity?.id ?? undefined } });
   if (!credential) {
     credential = await db.credential.create({
       data: {
+        orgId,
         subjectType: person ? "person" : "entity",
         personId: person?.id ?? null,
         entityId: entity?.id ?? null,
@@ -78,11 +81,9 @@ export async function verifyNpi(subject: { personId?: string; entityId?: string 
 
   const vid = randomUUID();
   const ownerEntityId = person?.entityId ?? entity?.id ?? (await db.entity.findFirstOrThrow({ where: { isPrimary: true } })).id;
-  const evidenceFileKey = fileKey(ownerEntityId, "verification", vid, "nppes-response.json", at);
+  const evidenceFileKey = fileKey(orgId, ownerEntityId, "verification", vid, "nppes-response.json", at);
   await storage().put(evidenceFileKey, JSON.stringify(json, null, 2), { contentType: "application/json", metadata: { verifier: "system", verified_at: at.toISOString(), source_url: NPPES + npi } });
-  await db.verification.create({
-    data: { id: vid, credentialId: credential.id, verifiedById: null, verifiedAt: at, method: "auto_api", sourceUrl: NPPES + npi, result, expirationSeen: null, disciplineFlag: false, note, evidenceFileKey, statusBefore: credential.status },
-  });
+  await recordVerification({ id: vid, orgId, credentialId: credential.id, verifiedById: null, verifiedAt: at, method: "auto_api", sourceUrl: NPPES + npi, result, expirationSeen: null, disciplineFlag: false, note, evidenceFileKey, statusBefore: credential.status, expiresBefore: credential.expiresOn });
   await recomputeCredential(credential.id);
   return { skipped: false as const, result, note, credentialId: credential.id };
 }
